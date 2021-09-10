@@ -1,0 +1,13 @@
+# Environment files
+.env
+
+# Config files
+config.json
+blacklist.json
+
+# Compiled files
+*.pyc
+*.swp
+
+# Cache folders
+__pycache__/
