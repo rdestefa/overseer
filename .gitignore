@@ -4,6 +4,10 @@
 # Config files
 config.json
 blacklist.json
+logging_config.yaml
+
+# Log files
+*.log
 
 # Compiled files
 *.pyc

@@ -1,33 +1,43 @@
 # general.py
 
 import json
+import logging
+import logging.config
 import os
 import platform
-import random
 import sys
+import yaml
 
-import aiohttp
 import discord
 from discord.ext import commands
 
+# Bot configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
+# Logger configs
+if not os.path.isfile("logging_config.yaml"):
+    print('No logging_config.yaml file found. Using default logger.')
+else:
+    with open("logging_config.yaml") as file:
+        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
+        logger = logging.getLogger(__name__)
+
 
 class general(commands.Cog, name="general"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="info", aliases=["botinfo"])
+    @commands.command(name="info", aliases=["botinfo"], usage="info")
     async def info(self, context):
         """
-        Get some useful (or not) information about the bot.
+        Get some useful (or not) information about Overseer.
         """
         embed = discord.Embed(
-            description="Ryan's Bot",
+            description="I belong to the almighty Creenis",
             color=0x42F56C
         )
         embed.set_author(
@@ -44,16 +54,16 @@ class general(commands.Cog, name="general"):
             inline=True
         )
         embed.add_field(
-            name="Prefix:",
+            name="Command Prefix:",
             value=f"{config['bot_prefix']}",
-            inline=False
+            inline=True
         )
         embed.set_footer(
             text=f"Requested by {context.message.author}"
         )
         await context.send(embed=embed)
 
-    @commands.command(name="serverinfo")
+    @commands.command(name="serverinfo", usage="serverinfo")
     async def serverinfo(self, context):
         """
         Get some useful (or not) information about the server.
@@ -71,7 +81,7 @@ class general(commands.Cog, name="general"):
         time = time[0]
 
         embed = discord.Embed(
-            title="**Server Name:**",
+            title="**Server Name**",
             description=f"{server}",
             color=0x42F56C
         )
@@ -80,19 +90,19 @@ class general(commands.Cog, name="general"):
         )
         embed.add_field(
             name="Owner",
-            value=f"{server.owner}\n{server.owner.id}"
+            value=f"{server.owner}"
         )
         embed.add_field(
             name="Server ID",
             value=server.id
         )
         embed.add_field(
-            name="Member Count",
-            value=server.member_count
-        )
-        embed.add_field(
             name="Text/Voice Channels",
             value=f"{channels}"
+        )
+        embed.add_field(
+            name="Member Count",
+            value=server.member_count
         )
         embed.add_field(
             name=f"Roles ({role_length})",
@@ -103,103 +113,32 @@ class general(commands.Cog, name="general"):
         )
         await context.send(embed=embed)
 
-    @commands.command(name="ping")
+    @commands.command(name="ping", usage="ping")
     async def ping(self, context):
         """
-        Check if the bot is alive.
+        Check if Overseer is alive.
         """
         embed = discord.Embed(
             title="🏓 Pong!",
-            description=f"The bot latency is {round(self.bot.latency * 1000)}ms.",
+            description=f"Overseer's latency is {round(self.bot.latency * 1000)}ms.",
             color=0x42F56C
         )
         await context.send(embed=embed)
 
-    @commands.command(name="invite")
+    @commands.command(name="invite", usage="invite")
     async def invite(self, context):
         """
-        Get the invite link of the bot to be able to invite it.
+        Get the invite link of Overseer to invite it to other servers.
         """
         embed = discord.Embed(
             description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
             color=0xD75BF4
         )
         try:
-            # Give permissions
+            # Needs permissions to do this
             await context.author.send(embed=embed)
-            await context.send("I sent you a private message!")
+            await context.send(f"Psst! {context.author.mention}, I sent you a private message!")
         except discord.Forbidden:
-            await context.send(embed=embed)
-
-    @commands.command(name="server", aliases=["support", "supportserver"])
-    async def server(self, context):
-        """
-        Get the invite link of the discord server of the bot for some support.
-        """
-        embed = discord.Embed(
-            description=f"Join the support server for the bot by clicking [here](https://discord.gg/HzJ3Gfr).",
-            color=0xD75BF4
-        )
-        try:
-            await context.author.send(embed=embed)
-            await context.send("I sent you a private message!")
-        except discord.Forbidden:
-            await context.send(embed=embed)
-
-    @commands.command(name="poll")
-    async def poll(self, context, *, title):
-        """
-        Create a poll where members can vote.
-        """
-        embed = discord.Embed(
-            title="A new poll has been created!",
-            description=f"{title}",
-            color=0x42F56C
-        )
-        embed.set_footer(
-            text=f"Poll created by: {context.message.author} • React to vote!"
-        )
-        embed_message = await context.send(embed=embed)
-        await embed_message.add_reaction("👍")
-        await embed_message.add_reaction("👎")
-        await embed_message.add_reaction("🤷")
-
-    @commands.command(name="8ball")
-    async def eight_ball(self, context, *, question):
-        """
-        Ask any question to the bot.
-        """
-        answers = ['It is certain.', 'It is decidedly so.', 'You may rely on it.', 'Without a doubt.',
-                   'Yes - definitely.', 'As I see, yes.', 'Most likely.', 'Outlook good.', 'Yes.',
-                   'Signs point to yes.', 'Reply hazy, try again.', 'Ask again later.', 'Better not tell you now.',
-                   'Cannot predict now.', 'Concentrate and ask again later.', 'Don\'t count on it.', 'My reply is no.',
-                   'My sources say no.', 'Outlook not so good.', 'Very doubtful.']
-        embed = discord.Embed(
-            title="**My Answer:**",
-            description=f"{answers[random.randint(0, len(answers))]}",
-            color=0x42F56C
-        )
-        embed.set_footer(
-            text=f"The question was: {question}"
-        )
-        await context.send(embed=embed)
-
-    @commands.command(name="bitcoin")
-    async def bitcoin(self, context):
-        """
-        Get the current price of bitcoin.
-        """
-        url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
-        # Async HTTP request
-        async with aiohttp.ClientSession() as session:
-            raw_response = await session.get(url)
-            response = await raw_response.text()
-            response = json.loads(response)
-            embed = discord.Embed(
-                title=":information_source: Info",
-                description=f"Bitcoin price is: ${response['bpi']['USD']['rate']}",
-                color=0x42F56C
-            )
             await context.send(embed=embed)
 
 

@@ -1,23 +1,39 @@
-# bot.py
+# overseer.py
+
+# This is the main execution file for the Overseer Discord bot
 
 import json
+import logging
+import logging.config
 import os
 import platform
-import random
 import sys
+import yaml
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import Bot
 
+
+# ----------------------- CONFIGS AND LOGGER SETUP -------------------------- #
+
+# Bot configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
+# Logger configs
+if not os.path.isfile("logging_config.yaml"):
+    print('No logging_config.yaml file found. Using default logger.')
+else:
+    with open("logging_config.yaml") as file:
+        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
+        logger = logging.getLogger()
+
 """
-Setup bot intents (events restrictions)
+Set up bot intents (events restrictions)
 
 Default Intents:
 intents.messages = True
@@ -38,35 +54,45 @@ intents.voice_states = False
 intents.webhooks = False
 
 Privileged Intents (Needs to be enabled on dev page):
-intents.presences = True
-intents.members = True
+intents.presences = False
+intents.members = False
 """
-
 intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
 
+# Initialize bot instance
 bot = Bot(command_prefix=config["bot_prefix"], intents=intents)
 
 
-# The code in this even is executed when the bot is ready
+# --------------------------- STARTUP EXECUTION ----------------------------- #
+
+
+# Executes on initial load of the bot
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user.name}")
-    print(f"Discord.py API version: {discord.__version__}")
-    print(f"Python version: {platform.python_version()}")
-    print(f"Running on: {platform.system()} {platform.release()} ({os.name})")
-    print("-------------------")
-    status_task.start()
+    logger.info("Logged in as %s", bot.user.name)
+    logger.info("Discord.py API version: %s", discord.__version__)
+    logger.info("Python version: %s", platform.python_version())
+    logger.info(
+        "Running on: %s %s (%s)",
+        platform.system(),
+        platform.release(),
+        os.name
+    )
+    await bot.change_presence(activity=discord.Game("itself"))
 
 
-# Setup the game status task of the bot
+"""Set up the game status task of the bot
 @tasks.loop(minutes=1.0)
 async def status_task():
     statuses = ["with you!", "with someone!",
                 f"{config['bot_prefix']}help", "with humans!"]
     await bot.change_presence(activity=discord.Game(random.choice(statuses)))
+"""
 
 
-# Removes the default help command of discord.py to be able to create our custom help command.
+# Removes the default help command of discord.py to enable custom help command
 bot.remove_command("help")
 
 if __name__ == "__main__":
@@ -75,13 +101,20 @@ if __name__ == "__main__":
             extension = file[:-3]
             try:
                 bot.load_extension(f"cogs.{extension}")
-                print(f"Loaded extension '{extension}'")
+                logger.debug("Loaded extension %s", extension)
             except Exception as e:
                 exception = f"{type(e).__name__}: {e}"
-                print(f"Failed to load extension {extension}\n{exception}")
+                logger.error(
+                    "Failed to load extention %s: %s",
+                    extension,
+                    exception
+                )
 
 
-# The code in this event is executed every time someone sends a message, with or without the prefix
+# ---------------------------- EVENT HANDLERS ------------------------------- #
+
+
+# Executes every time someone sends a message, with or without the prefix
 @bot.event
 async def on_message(message):
     # Ignores if a command is being executed by a bot or by the bot itself
@@ -95,25 +128,33 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-# The code in this event is executed every time a command has been *successfully* executed
+# Executes every time a command has been *successfully* executed
 @bot.event
 async def on_command_completion(ctx):
     fullCommandName = ctx.command.qualified_name
-    split = fullCommandName.split(" ")
-    executedCommand = str(split[0])
-    print(
-        f"Executed {executedCommand} command in {ctx.guild.name} (ID: {ctx.message.guild.id}) by {ctx.message.author} (ID: {ctx.message.author.id})")
+    executedCommand = str(fullCommandName.split(" ")[0])
+    logger.debug(
+        "Executed %s in %s (ID: %s) by %s (ID: %s)",
+        executedCommand,
+        ctx.guild.name,
+        ctx.message.guild.id,
+        ctx.message.author,
+        ctx.message.author.id
+    )
 
 
-# The code in this event is executed every time a valid commands catches an error
+# Executes every time a valid command catches an error
 @bot.event
 async def on_command_error(context, error):
+    failedCommand = str(context.command.qualified_name.split()[0])
+    logger.error("Failed to execute %s: %s", failedCommand, str(error))
+
     if isinstance(error, commands.CommandOnCooldown):
         minutes, seconds = divmod(error.retry_after, 60)
         hours, minutes = divmod(minutes, 60)
         hours = hours % 24
         embed = discord.Embed(
-            title="Hey, please slow down!",
+            title="Hey! Slow down!",
             description=f"You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
             color=0xE02B2B
         )
@@ -121,7 +162,7 @@ async def on_command_error(context, error):
     elif isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
             title="Error!",
-            description="You are missing the permission `" + ", ".join(
+            description="You are missing the permission `" + "`, `".join(
                 error.missing_perms) + "` to execute this command!",
             color=0xE02B2B
         )
@@ -129,11 +170,16 @@ async def on_command_error(context, error):
     elif isinstance(error, commands.MissingRequiredArgument):
         embed = discord.Embed(
             title="Error!",
-            description=str(error).capitalize(),
-            # We need to capitalize because the command arguments have no capital letter in the code.
+            description=f"You forgot the following argument: `{str(error).split()[0]}`.\nTry calling `!help` if you're having trouble.",
             color=0xE02B2B
         )
         await context.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            title="Error!",
+            description="Hmm, I don't know what happened here.",
+            color=0xE02B2B
+        )
     raise error
 
 

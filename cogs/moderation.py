@@ -1,33 +1,52 @@
 # moderation.py
 
 import json
+import logging
+import logging.config
 import os
 import sys
+import yaml
 
 import discord
 from discord.ext import commands
 
+# Bot configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
+# Logger configs
+if not os.path.isfile("logging_config.yaml"):
+    print('No logging_config.yaml file found. Using default logger.')
+else:
+    with open("logging_config.yaml") as file:
+        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
+        logger = logging.getLogger(__name__)
+
 
 class moderation(commands.Cog, name="moderation"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='kick', pass_context=True)
+    @commands.command(
+        name='kick',
+        usage="kick <@user> <reason>",
+        pass_context=True)
     @commands.has_permissions(kick_members=True)
     async def kick(self, context, member: discord.Member, *, reason="Not specified"):
         """
-        Kick a user out of the server.
+        Kick a user out of the server. Must have kick permissions.
         """
+        # Remove any quotes around the reason
+        reason = reason.strip('"').strip("'")
         if member.guild_permissions.administrator:
+            logger.warning(
+                "Cannot kick %s: Users with Admin permissions cannot be kicked.", member)
             embed = discord.Embed(
                 title="Error!",
-                description="User has Admin permissions.",
+                description=f"**{member.name}** has Admin permissions.",
                 color=0xE02B2B
             )
             await context.send(embed=embed)
@@ -40,7 +59,7 @@ class moderation(commands.Cog, name="moderation"):
                     color=0x42F56C
                 )
                 embed.add_field(
-                    name="Reason:",
+                    name="Reason",
                     value=reason
                 )
                 await context.send(embed=embed)
@@ -48,21 +67,22 @@ class moderation(commands.Cog, name="moderation"):
                     await member.send(
                         f"You were kicked by **{context.message.author}**!\nReason: {reason}"
                     )
-                except:
-                    pass
-            except:
+                except Exception as e:
+                    logger.error('Failed to DM %s: %s', member, str(e))
+            except Exception as e:
+                logger.error('Failed to kick %s: %s', member, str(e))
                 embed = discord.Embed(
                     title="Error!",
-                    description="An error occurred while trying to kick the user. Make sure my role is above the role of the user you want to kick.",
+                    description="An error occurred while trying to kick the user. Make sure my role supersedes that of the user you want to kick.",
                     color=0xE02B2B
                 )
                 await context.message.channel.send(embed=embed)
 
-    @commands.command(name="nick")
+    @commands.command(name="nick", usage="nick")
     @commands.has_permissions(manage_nicknames=True)
     async def nick(self, context, member: discord.Member, *, nickname=None):
         """
-        Change the nickname of a user on a server.
+        Change the nickname of a user on a server. Must have permission to manage nicknames.
         """
         try:
             await member.edit(nick=nickname)
@@ -72,19 +92,20 @@ class moderation(commands.Cog, name="moderation"):
                 color=0x42F56C
             )
             await context.send(embed=embed)
-        except:
+        except Exception as e:
+            logger.error('Failed to change nickname of %s: %s', member, str(e))
             embed = discord.Embed(
                 title="Error!",
-                description="An error occurred while trying to change the nickname of the user. Make sure my role is above the role of the user you want to change the nickname.",
+                description=f"An error occurred while trying to change the nickname of **{member}**. Make sure my role is above the role of the user you want to change the nickname.",
                 color=0xE02B2B
             )
             await context.message.channel.send(embed=embed)
 
-    @commands.command(name="ban")
+    @commands.command(name="ban", usage="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, context, member: discord.Member, *, reason="Not specified"):
         """
-        Bans a user from the server.
+        Bans a user from the server. Must have ban permissions.
         """
         try:
             if member.guild_permissions.administrator:
@@ -102,12 +123,13 @@ class moderation(commands.Cog, name="moderation"):
                     color=0x42F56C
                 )
                 embed.add_field(
-                    name="Reason:",
+                    name="Reason",
                     value=reason
                 )
                 await context.send(embed=embed)
                 await member.send(f"You were banned by **{context.message.author}**!\nReason: {reason}")
-        except:
+        except Exception as e:
+            logger.error('Failed to ban %s: %s', member, str(e))
             embed = discord.Embed(
                 title="Error!",
                 description="An error occurred while trying to ban the user. Make sure my role is above the role of the user you want to ban.",
@@ -115,11 +137,11 @@ class moderation(commands.Cog, name="moderation"):
             )
             await context.send(embed=embed)
 
-    @commands.command(name="warn")
+    @commands.command(name="warn", usage="warn")
     @commands.has_permissions(manage_messages=True)
     async def warn(self, context, member: discord.Member, *, reason="Not specified"):
         """
-        Warns a user in his private messages.
+        Direct messages a user with a warning.
         """
         embed = discord.Embed(
             title="User Warned!",
@@ -127,16 +149,16 @@ class moderation(commands.Cog, name="moderation"):
             color=0x42F56C
         )
         embed.add_field(
-            name="Reason:",
+            name="Reason",
             value=reason
         )
         await context.send(embed=embed)
         try:
             await member.send(f"You were warned by **{context.message.author}**!\nReason: {reason}")
-        except:
-            pass
+        except Exception as e:
+            logger.error('Failed to warn %s: %s', member, str(e))
 
-    @commands.command(name="purge")
+    @commands.command(name="purge", usage="purge")
     @commands.has_permissions(manage_messages=True, manage_channels=True)
     async def purge(self, context, amount):
         """
@@ -144,10 +166,11 @@ class moderation(commands.Cog, name="moderation"):
         """
         try:
             amount = int(amount)
-        except:
+        except Exception as e:
+            logger.error("Only integers are accepted by purge: %s", str(e))
             embed = discord.Embed(
                 title="Error!",
-                description=f"`{amount}` is not a valid number.",
+                description=f"`{amount}` is not a valid integer.",
                 color=0xE02B2B
             )
             await context.send(embed=embed)

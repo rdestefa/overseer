@@ -1,33 +1,45 @@
 # owner.py
 
 import json
+import logging
+import logging.config
 import os
 import sys
+import yaml
 
 import discord
 from discord.ext import commands
 
-from helpers import json_manager
+from helpers import json_helpers
 
+# Bot configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
+# Logger configs
+if not os.path.isfile("logging_config.yaml"):
+    print('No logging_config.yaml file found. Using default logger.')
+else:
+    with open("logging_config.yaml") as file:
+        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
+        logger = logging.getLogger(__name__)
+
 
 class owner(commands.Cog, name="owner"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="shutdown")
+    @commands.command(name="shutdown", usage="shutdown")
     async def shutdown(self, context):
         """
-        Make the bot shutdown
+        Shut down the Overseer...for now.
         """
         if context.message.author.id in config["owners"]:
             embed = discord.Embed(
-                description="Shutting down. Bye! :wave:",
+                description="Shutting down :wave:. We'll meet again.",
                 color=0x42F56C
             )
             await context.send(embed=embed)
@@ -35,15 +47,15 @@ class owner(commands.Cog, name="owner"):
         else:
             embed = discord.Embed(
                 title="Error!",
-                description="You don't have the permission to use this command.",
+                description="You don't have permission to shut down the Overseer.",
                 color=0xE02B2B
             )
             await context.send(embed=embed)
 
-    @commands.command(name="say", aliases=["echo"])
+    @commands.command(name="say", aliases=["echo"], usage="say")
     async def say(self, context, *, args):
         """
-        The bot will say anything you want.
+        The Overseer will say what you're thinking so you don't have to.
         """
         if context.message.author.id in config["owners"]:
             await context.send(args)
@@ -55,10 +67,10 @@ class owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @commands.command(name="embed")
+    @commands.command(name="embed", usage="embed")
     async def embed(self, context, *, args):
         """
-        The bot will say anything you want, but within embeds.
+        The Overseer will say what you're thinking, but within embeds.
         """
         if context.message.author.id in config["owners"]:
             embed = discord.Embed(
@@ -74,10 +86,11 @@ class owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @commands.group(name="blacklist")
+    @commands.group(name="blacklist", usage="blacklist")
     async def blacklist(self, context):
         """
-        Lets you add or remove a user from not being able to use the bot.
+        Blacklist a user or remove one from the blacklist.
+        Blacklisted users won't be able to issue commands to the Overseer.
         """
         if context.invoked_subcommand is None:
             with open("blacklist.json") as file:
@@ -89,10 +102,10 @@ class owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @blacklist.command(name="add")
+    @blacklist.command(name="add", usage="add")
     async def blacklist_add(self, context, member: discord.Member = None):
         """
-        Lets you add a user from not being able to use the bot.
+        Add a user to the Overseer's blacklist.
         """
         if context.message.author.id in config["owners"]:
             userID = member.id
@@ -107,7 +120,7 @@ class owner(commands.Cog, name="owner"):
                     )
                     await context.send(embed=embed)
                     return
-                json_manager.add_user_to_blacklist(userID)
+                json_helpers.add_user_to_blacklist(userID)
                 embed = discord.Embed(
                     title="User Blacklisted",
                     description=f"**{member.name}** has been successfully added to the blacklist",
@@ -134,15 +147,15 @@ class owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @blacklist.command(name="remove")
+    @blacklist.command(name="remove", usage="remove")
     async def blacklist_remove(self, context, member: discord.Member = None):
         """
-        Lets you remove a user from not being able to use the bot.
+        Remove a user from the Overseer's blacklist.
         """
         if context.message.author.id in config["owners"]:
             userID = member.id
             try:
-                json_manager.remove_user_from_blacklist(userID)
+                json_helpers.remove_user_from_blacklist(userID)
                 embed = discord.Embed(
                     title="User removed from blacklist",
                     description=f"**{member.name}** has been successfully removed from the blacklist",
