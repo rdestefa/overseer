@@ -27,7 +27,7 @@ else:
         logger = logging.getLogger(__name__)
 
 
-class general(commands.Cog, name="general"):
+class General(commands.Cog, name="general"):
     def __init__(self, bot):
         self.bot = bot
 

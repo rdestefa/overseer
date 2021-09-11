@@ -28,7 +28,7 @@ else:
         logger = logging.getLogger(__name__)
 
 
-class owner(commands.Cog, name="owner"):
+class Owner(commands.Cog, name="owner"):
     def __init__(self, bot):
         self.bot = bot
 

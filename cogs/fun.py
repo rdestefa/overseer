@@ -39,7 +39,7 @@ class Fun(commands.Cog, name="fun"):
     -> Because the user should be able to use the command *once* every *86400* seconds
 
     Why BucketType.user?
-    -> Because the cooldown only affects the current user. These are other kinds of cooldowns:
+    -> Because the cooldown only affects the current user. Other kinds of cooldowns:
     - BucketType.default for a global basis.
     - BucketType.user for a per-user basis.
     - BucketType.server for a per-server basis.
@@ -52,7 +52,7 @@ class Fun(commands.Cog, name="fun"):
         """
         Get your daily dose of knowledge. Can only run once per day per user.
         """
-        # This will prevent your bot from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
+        # This will prevent the Overseer from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
         async with aiohttp.ClientSession() as session:
             async with session.get("https://uselessfacts.jsph.pl/random.json?language=en") as request:
                 if request.status == 200:
@@ -67,7 +67,7 @@ class Fun(commands.Cog, name="fun"):
                         color=0xE02B2B
                     )
                     await context.send(embed=embed)
-                    # We need to reset the cool down since the user didn't got his daily fact.
+                    # We need to reset the cooldown since the user didn't got their daily fact.
                     self.dailyfact.reset_cooldown(context)
 
     @commands.command(name="rps", usage="rps")

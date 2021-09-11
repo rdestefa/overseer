@@ -26,7 +26,7 @@ else:
         logger = logging.getLogger(__name__)
 
 
-class moderation(commands.Cog, name="moderation"):
+class Moderation(commands.Cog, name="moderation"):
     def __init__(self, bot):
         self.bot = bot
 
