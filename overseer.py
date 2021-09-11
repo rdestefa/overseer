@@ -15,7 +15,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 
 
-# ----------------------- CONFIGS AND LOGGER SETUP -------------------------- #
+# -------------------------- CONFIGS AND INTENTS ---------------------------- #
 
 # Bot configs
 if not os.path.isfile("config.json"):
