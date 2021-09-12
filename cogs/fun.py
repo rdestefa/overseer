@@ -7,27 +7,20 @@ import logging.config
 import os
 import random
 import sys
-import yaml
 
 import aiohttp
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-# Bot configs
+# Bot and logger configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
-# Logger configs
-if not os.path.isfile("logging_config.yaml"):
-    print('No logging_config.yaml file found. Using default logger.')
-else:
-    with open("logging_config.yaml") as file:
-        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
-        logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class Fun(commands.Cog, name="fun"):
@@ -46,13 +39,17 @@ class Fun(commands.Cog, name="fun"):
     - BucketType.channel for a per-channel basis.
     """
 
-    @commands.command(name="dailyfact", usage="dailyfact")
+    @commands.command(
+        name="dailyfact",
+        usage="dailyfact",
+        brief="Get your daily dose of knowledge."
+    )
     @commands.cooldown(1, 86400, BucketType.user)
     async def dailyfact(self, context):
         """
-        Get your daily dose of knowledge. Can only run once per day per user.
+        Get a random fact from the Internet. Can only run once per day per user.
         """
-        # This will prevent the Overseer from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
+        # This will prevent the Overseer from stopping everything when making a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
         async with aiohttp.ClientSession() as session:
             async with session.get("https://uselessfacts.jsph.pl/random.json?language=en") as request:
                 if request.status == 200:
@@ -61,19 +58,26 @@ class Fun(commands.Cog, name="fun"):
                         description=data["text"], color=0xD75BF4)
                     await context.send(embed=embed)
                 else:
+                    logger.warning(
+                        'Failed to fetch a daily fact from the useless facts API. Error code: %s', request.status)
                     embed = discord.Embed(
                         title="Error!",
-                        description="There is something wrong with the API, please try again later",
+                        description="There's an issue with the useless facts API. Please try again later",
                         color=0xE02B2B
                     )
                     await context.send(embed=embed)
-                    # We need to reset the cooldown since the user didn't got their daily fact.
+                    # We need to reset the cooldown since the user didn't get their daily fact.
                     self.dailyfact.reset_cooldown(context)
 
-    @commands.command(name="rps", usage="rps")
+    @commands.command(
+        name="rps",
+        usage="rps",
+        brief="Play rock, paper, scissors with me."
+    )
     async def rock_paper_scissors(self, context):
         """
         Play rock, paper, scissors with me. It's a fight to the death!
+        I don't like time-wasters, so you'll have 10 seconds to respond.
         """
         choices = {
             0: "rock",
@@ -134,10 +138,15 @@ class Fun(commands.Cog, name="fun"):
                 name=context.author.display_name, icon_url=context.author.avatar_url)
             await choose_message.edit(embed=timeout_embed)
 
-    @commands.command(name="poll", usage="poll <title>")
+    @commands.command(
+        name="poll",
+        usage="poll <title>",
+        brief="Create a poll that members can vote on."
+    )
     async def poll(self, context, *, title):
         """
-        Create a poll where members can vote.
+        Create a poll that members can vote on.
+        The three default reactions are yes, no, and maybe.
         """
         embed = discord.Embed(
             title="A new poll has been created!",
@@ -152,10 +161,14 @@ class Fun(commands.Cog, name="fun"):
         await embed_message.add_reaction("👎")
         await embed_message.add_reaction("🤷")
 
-    @commands.command(name="8ball", usage="8ball <question>")
+    @commands.command(
+        name="8ball",
+        usage="8ball <question>",
+        brief="Ask the Overseer anything."
+    )
     async def eight_ball(self, context, *, question):
         """
-        Ask Overseer anything. You may not like what you see.
+        Ask the Overseer anything. You may not like its answer.
         """
         answers = ['It is certain.', 'It is decidedly so.', 'You may rely on it.', 'Without a doubt.',
                    'Yes - definitely.', 'As I see, yes.', 'Most likely.', 'Outlook good.', 'Yes.',
@@ -172,10 +185,14 @@ class Fun(commands.Cog, name="fun"):
         )
         await context.send(embed=embed)
 
-    @commands.command(name="bitcoin", usage="bitcoin")
+    @commands.command(
+        name="bitcoin",
+        usage="bitcoin",
+        brief="Get the current price of Bitcoin"
+    )
     async def bitcoin(self, context):
         """
-        Get the current price of bitcoin.
+        Get the current price of Bitcoin from coindesk.com.
         """
         url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
         # Async HTTP request

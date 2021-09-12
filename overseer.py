@@ -10,6 +10,8 @@ import platform
 import sys
 import yaml
 
+import Levenshtein as lev
+
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
@@ -68,7 +70,7 @@ bot = Bot(command_prefix=config["bot_prefix"], intents=intents)
 # --------------------------- STARTUP EXECUTION ----------------------------- #
 
 
-# Executes on initial load of the bot
+# Executes on initial load of the Overseer
 @bot.event
 async def on_ready():
     logger.info("Logged in as %s", bot.user.name)
@@ -117,7 +119,7 @@ if __name__ == "__main__":
 # Executes every time someone sends a message, with or without the prefix
 @bot.event
 async def on_message(message):
-    # Ignores if a command is being executed by a bot or by the bot itself
+    # Ignores if a command is being executed by a bot or by the Overseer itself
     if message.author == bot.user or message.author.bot:
         return
     # Ignores if a command is being executed by a blacklisted user
@@ -143,13 +145,45 @@ async def on_command_completion(ctx):
     )
 
 
-# Executes every time a valid command catches an error
+# Executes every time a valid command raises an error
 @bot.event
 async def on_command_error(context, error):
-    failedCommand = str(context.command.qualified_name.split()[0])
+    failedCommand = context.invoked_with
     logger.error("Failed to execute %s: %s", failedCommand, str(error))
 
-    if isinstance(error, commands.CommandOnCooldown):
+    if isinstance(error, commands.CommandNotFound):
+        # Don't use failedCommand in case the error was raised from !help
+        invalidCommand = str(error).split()[1].strip('"')
+
+        # Calculate Levenshtein distance from valid commands for recommendation
+        cmds = list(bot.commands)
+        lev_dists = [lev.distance(invalidCommand, str(cmd))
+                     / max(len(invalidCommand), len(str(cmd))) for cmd in cmds]
+        lev_min = min(lev_dists)
+
+        # Build error message
+        description = f"I don't recognize the `{config['bot_prefix']}{invalidCommand}` command.\n"
+        if lev_min <= 0.5:
+            description += f"Did you mean `{config['bot_prefix']}{cmds[lev_dists.index(lev_min)]}`?"
+        else:
+            description += f"Try calling `{config['bot_prefix']}help` for a list of valid commands."
+
+        # Send message
+        embed = discord.Embed(
+            title="Command Not Found!",
+            description=description,
+            color=0xE02B2B
+        )
+        await context.send(embed=embed)
+    elif isinstance(error, commands.MemberNotFound):
+        invalid_member = str(error).split()[1].strip('"')
+        embed = discord.Embed(
+            title="Member Not Found!",
+            description=f"I looked everywhere, but I couldn't find `{invalid_member}` in the server.",
+            color=0xE02B2B
+        )
+        await context.send(embed=embed)
+    elif isinstance(error, commands.CommandOnCooldown):
         minutes, seconds = divmod(error.retry_after, 60)
         hours, minutes = divmod(minutes, 60)
         hours = hours % 24
@@ -161,16 +195,31 @@ async def on_command_error(context, error):
         await context.send(embed=embed)
     elif isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
-            title="Error!",
-            description="You are missing the permission `" + "`, `".join(
+            title="Permissions Error!",
+            description="You are missing the permission(s) `" + "`, `".join(
                 error.missing_perms) + "` to execute this command!",
             color=0xE02B2B
         )
         await context.send(embed=embed)
     elif isinstance(error, commands.MissingRequiredArgument):
         embed = discord.Embed(
-            title="Error!",
-            description=f"You forgot the following argument: `{str(error).split()[0]}`.\nTry calling `!help` if you're having trouble.",
+            title="Missing Argument!",
+            description=f"You forgot the following argument: `{error.param}`.\nTry calling `{config['bot_prefix']}help` if you're having trouble.",
+            color=0xE02B2B
+        )
+        await context.send(embed=embed)
+    elif isinstance(error, commands.TooManyArguments):
+        embed = discord.Embed(
+            title="Too Many Arguments!",
+            description=f"You input too many arguments for `{config['bot_prefix']}{failedCommand}`.\nTry calling `{config['bot_prefix']}help` if you're having trouble.",
+            color=0xE02B2B
+        )
+        await context.send(embed=embed)
+    elif isinstance(error, commands.BadArgument):
+        message = str(error).replace('"', '`')
+        embed = discord.Embed(
+            title="Bad Argument(s)!",
+            description=f"{message}\nTry calling `{config['bot_prefix']}help` if you're having trouble.",
             color=0xE02B2B
         )
         await context.send(embed=embed)
@@ -180,8 +229,8 @@ async def on_command_error(context, error):
             description="Hmm, I don't know what happened here.",
             color=0xE02B2B
         )
-    raise error
+        await context.send(embed=embed)
 
 
-# Run the bot with the token
+# Run the Overseer with its token
 bot.run(config["token"])

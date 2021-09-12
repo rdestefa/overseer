@@ -5,24 +5,17 @@ import logging
 import logging.config
 import os
 import sys
-import yaml
 
 from discord.ext import commands
 
-# Bot configs
+# Bot and logger configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
-# Logger configs
-if not os.path.isfile("logging_config.yaml"):
-    print('No logging_config.yaml file found. Using default logger.')
-else:
-    with open("logging_config.yaml") as file:
-        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
-        logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 # Here we name the cog and create a new class for the cog.
@@ -31,14 +24,18 @@ class Template(commands.Cog, name="template"):
         self.bot = bot
 
     # Here you can just add your own commands, you'll always need to provide "self" as first parameter.
-    @commands.command(name="testcommand", usage="testcommand")
+    @commands.command(
+        name="testcommand",
+        usage="testcommand",
+        brief="Test command that does nothing."
+    )
     async def testcommand(self, context):
         """
         This is a testing command that does nothing.
         """
         # Do your stuff here
 
-        # Don't forget to remove "pass", that's just because there's no content in the method.
+        # Don't forget to remove "pass"
         pass
 
 

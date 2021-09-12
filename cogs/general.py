@@ -6,35 +6,33 @@ import logging.config
 import os
 import platform
 import sys
-import yaml
 
 import discord
 from discord.ext import commands
 
-# Bot configs
+# Bot and logger configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
-# Logger configs
-if not os.path.isfile("logging_config.yaml"):
-    print('No logging_config.yaml file found. Using default logger.')
-else:
-    with open("logging_config.yaml") as file:
-        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
-        logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="info", aliases=["botinfo"], usage="info")
+    @commands.command(
+        name="info",
+        aliases=["botinfo"],
+        usage="info",
+        brief="Get basic information about the Overseer."
+    )
     async def info(self, context):
         """
-        Get some useful (or not) information about Overseer.
+        Get some useful (or not) basic information about the Overseer.
         """
         embed = discord.Embed(
             description="I belong to the almighty Creenis",
@@ -44,17 +42,17 @@ class General(commands.Cog, name="general"):
             name="Bot Information"
         )
         embed.add_field(
-            name="Owner:",
+            name="Owner",
             value="Ryan Creenis#8374",
             inline=True
         )
         embed.add_field(
-            name="Python Version:",
+            name="Python Version",
             value=f"{platform.python_version()}",
             inline=True
         )
         embed.add_field(
-            name="Command Prefix:",
+            name="Command Prefix",
             value=f"{config['bot_prefix']}",
             inline=True
         )
@@ -63,10 +61,14 @@ class General(commands.Cog, name="general"):
         )
         await context.send(embed=embed)
 
-    @commands.command(name="serverinfo", usage="serverinfo")
+    @commands.command(
+        name="serverinfo",
+        usage="serverinfo",
+        brief="Get basic information about the server."
+    )
     async def serverinfo(self, context):
         """
-        Get some useful (or not) information about the server.
+        Get some useful (or not) basic information about the server.
         """
         server = context.message.guild
         roles = [x.name for x in server.roles]
@@ -97,26 +99,31 @@ class General(commands.Cog, name="general"):
             value=server.id
         )
         embed.add_field(
-            name="Text/Voice Channels",
-            value=f"{channels}"
+            name=f"Roles ({role_length})",
+            value=roles,
+            inline=False
         )
         embed.add_field(
             name="Member Count",
             value=server.member_count
         )
         embed.add_field(
-            name=f"Roles ({role_length})",
-            value=roles
+            name="Text/Voice Channels",
+            value=f"{channels}"
         )
         embed.set_footer(
-            text=f"Created at: {time}"
+            text=f"Created on {time}"
         )
         await context.send(embed=embed)
 
-    @commands.command(name="ping", usage="ping")
+    @commands.command(
+        name="ping",
+        usage="ping",
+        brief="Check if the Overseer is alive."
+    )
     async def ping(self, context):
         """
-        Check if Overseer is alive.
+        Check if the Overseer is alive.
         """
         embed = discord.Embed(
             title="🏓 Pong!",
@@ -125,22 +132,29 @@ class General(commands.Cog, name="general"):
         )
         await context.send(embed=embed)
 
-    @commands.command(name="invite", usage="invite")
+    @commands.command(
+        name="invite",
+        usage="invite",
+        brief="Get the Overseer's invite link."
+    )
     async def invite(self, context):
         """
-        Get the invite link of Overseer to invite it to other servers.
+        Get the Overseer's invite link to share with other servers.
         """
         embed = discord.Embed(
             description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
             color=0xD75BF4
         )
+
         try:
             # Needs permissions to do this
             await context.author.send(embed=embed)
             await context.send(f"Psst! {context.author.mention}, I sent you a private message!")
         except discord.Forbidden:
+            logger.warning(
+                "Overseer doesn't have permission to DM %s", context.author)
             await context.send(embed=embed)
 
 
 def setup(bot):
-    bot.add_cog(general(bot))
+    bot.add_cog(General(bot))

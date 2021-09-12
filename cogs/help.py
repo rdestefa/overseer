@@ -5,36 +5,56 @@ import logging
 import logging.config
 import os
 import sys
-import yaml
 
 import discord
 from discord.ext import commands
 
-# Bot configs
+# Bot and logger configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
-# Logger configs
-if not os.path.isfile("logging_config.yaml"):
-    print('No logging_config.yaml file found. Using default logger.')
-else:
-    with open("logging_config.yaml") as file:
-        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
-        logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class Help(commands.Cog, name="help"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help", usage="help")
-    async def help(self, context):
+    @commands.command(
+        name="help",
+        usage="help <command>",
+        brief="List one or all of the Overseer's commands."
+    )
+    async def help(self, context, command=None):
         """
-        List all commands from every Cog that Overseer has loaded.
+        Display help text for a specific command.
+        If no command is specified, the Overseer will list all commands from every Cog that it's loaded.
         """
+        if command is not None:
+            # Trim prefix from command
+            command = command[1:] if command.startswith(
+                config['bot_prefix']) else command
+
+            # Search for command within cogs
+            for i in self.bot.cogs:
+                cmds = self.bot.get_cog(i.lower()).get_commands()
+                cmd_names = [cmd.name for cmd in cmds]
+                if command in cmd_names:
+                    cmd = cmds[cmd_names.index(command)]
+                    embed = discord.Embed(
+                        title=f"{cmd.name.capitalize()} (Usage: `{cmd.usage}`)",
+                        description=f"{cmd.help}",
+                        color=0x42F56C
+                    )
+                    await context.send(embed=embed)
+                    return
+
+            # Command not found
+            raise commands.CommandNotFound(f'Command "{command}" is not found')
+
         prefix = config["bot_prefix"]
         if not isinstance(prefix, str):
             prefix = prefix[0]
@@ -45,12 +65,13 @@ class Help(commands.Cog, name="help"):
         )
         for i in self.bot.cogs:
             cog = self.bot.get_cog(i.lower())
-            commands = cog.get_commands()
-            command_list = [command.usage for command in commands]
-            command_description = [command.help for command in commands]
+            cmds = cog.get_commands()
+            cmd_list = [cmd.usage for cmd in cmds]
+            cmd_description = [cmd.brief for cmd in cmds]
+
             help_text = '\n'.join(
-                f'{prefix}{n} - {h}' for n, h in zip(command_list,
-                                                     command_description))
+                f'{prefix}{n} - {h}' for n, h in zip(cmd_list,
+                                                     cmd_description))
             embed.add_field(name=i.capitalize(),
                             value=f'```{help_text}```', inline=False)
         await context.send(embed=embed)

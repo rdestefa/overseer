@@ -5,37 +5,34 @@ import logging
 import logging.config
 import os
 import sys
-import yaml
 
 import discord
 from discord.ext import commands
 
 from helpers import json_helpers
 
-# Bot configs
+# Bot and logger configs
 if not os.path.isfile("config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open("config.json") as file:
         config = json.load(file)
 
-# Logger configs
-if not os.path.isfile("logging_config.yaml"):
-    print('No logging_config.yaml file found. Using default logger.')
-else:
-    with open("logging_config.yaml") as file:
-        logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
-        logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class Owner(commands.Cog, name="owner"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="shutdown", usage="shutdown")
+    @commands.command(
+        name="shutdown",
+        usage="shutdown",
+        brief="Shut down the Overseer...for now."
+    )
     async def shutdown(self, context):
         """
-        Shut down the Overseer...for now.
+        Shut down the Overseer bot. Only the Overseer's owner can do this.
         """
         if context.message.author.id in config["owners"]:
             embed = discord.Embed(
@@ -52,10 +49,16 @@ class Owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @commands.command(name="say", aliases=["echo"], usage="say")
+    @commands.command(
+        name="say",
+        aliases=["echo"],
+        usage="say <message>",
+        brief="The Overseer says what you're thinking."
+    )
     async def say(self, context, *, args):
         """
         The Overseer will say what you're thinking so you don't have to.
+        Only the Overseer's owner can do this.
         """
         if context.message.author.id in config["owners"]:
             await context.send(args)
@@ -67,7 +70,11 @@ class Owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @commands.command(name="embed", usage="embed")
+    @commands.command(
+        name="embed",
+        usage="embed <message>",
+        brief="The Overseer embeds what you're thinking."
+    )
     async def embed(self, context, *, args):
         """
         The Overseer will say what you're thinking, but within embeds.
@@ -86,11 +93,16 @@ class Owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @commands.group(name="blacklist", usage="blacklist")
+    @commands.group(
+        name="blacklist",
+        usage="blacklist",
+        brief="Edit the Overseer's blacklist."
+    )
     async def blacklist(self, context):
         """
-        Blacklist a user or remove one from the blacklist.
+        Add or remove users from the Overseer's blacklist.
         Blacklisted users won't be able to issue commands to the Overseer.
+        Using this command without arguments will print the current blacklist.
         """
         if context.invoked_subcommand is None:
             with open("blacklist.json") as file:
@@ -102,7 +114,11 @@ class Owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @blacklist.command(name="add", usage="add")
+    @blacklist.command(
+        name="add",
+        usage="add <@user>",
+        brief="Add a user to the Overseer's blacklist."
+    )
     async def blacklist_add(self, context, member: discord.Member = None):
         """
         Add a user to the Overseer's blacklist.
@@ -147,7 +163,11 @@ class Owner(commands.Cog, name="owner"):
             )
             await context.send(embed=embed)
 
-    @blacklist.command(name="remove", usage="remove")
+    @blacklist.command(
+        name="remove",
+        usage="remove <@user>",
+        brief="Remove a user from the Overseer's blacklist"
+    )
     async def blacklist_remove(self, context, member: discord.Member = None):
         """
         Remove a user from the Overseer's blacklist.
@@ -184,4 +204,4 @@ class Owner(commands.Cog, name="owner"):
 
 
 def setup(bot):
-    bot.add_cog(owner(bot))
+    bot.add_cog(Owner(bot))
