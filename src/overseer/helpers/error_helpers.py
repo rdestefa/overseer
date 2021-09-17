@@ -12,23 +12,23 @@ def handle_command_not_found(
     error: commands.CommandNotFound,
     prefix: str
 ) -> discord.Embed:
-    # Don't use failedCommand in case the error was raised from !help
+    # Don't use failed_command in case the error was raised from !help.
     invalidCommand = str(error).split()[1].strip('"')
 
-    # Calculate Levenshtein distance from valid commands for recommendation
+    # Calculate Levenshtein distance from valid commands for recommendation.
     cmds = list(bot.commands)
     lev_dists = [lev.distance(invalidCommand, str(cmd))
                  / max(len(invalidCommand), len(str(cmd))) for cmd in cmds]
     lev_min = min(lev_dists)
 
-    # Build error message
+    # Build error message.
     description = f"I don't recognize the `{prefix}{invalidCommand}` command.\n"
     if lev_min <= 0.5:
         description += f"Did you mean `{prefix}{cmds[lev_dists.index(lev_min)]}`?"
     else:
         description += f"Try calling `{prefix}help` for a list of valid commands."
 
-    # Send message
+    # Send message.
     embed = discord.Embed(
         title="Command Not Found!",
         description=description,
@@ -36,7 +36,6 @@ def handle_command_not_found(
     )
 
     return embed
-    # await context.send(embed=embed)
 
 
 def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:

@@ -140,7 +140,7 @@ class General(commands.Cog, name="general"):
         )
 
         try:
-            # Needs permissions to do this
+            # Needs permissions to do this.
             await context.author.send(embed=embed)
             await context.send(f"Psst! {context.author.mention}, I sent you a private message!")
         except discord.Forbidden:

@@ -43,7 +43,8 @@ class Fun(commands.Cog, name="fun"):
         """
         Get a random fact from the Internet. Can only run once per day per user.
         """
-        # This will prevent the Overseer from stopping everything when making a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
+        # This will prevent the Overseer from stopping everything when making a web request.
+        # See https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request.
         async with aiohttp.ClientSession() as session:
             async with session.get("https://uselessfacts.jsph.pl/random.json?language=en") as request:
                 if request.status == 200:
@@ -191,7 +192,7 @@ class Fun(commands.Cog, name="fun"):
         Get the current price of Bitcoin from coindesk.com.
         """
         url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
-        # Async HTTP request
+        # Async HTTP request.
         async with aiohttp.ClientSession() as session:
             raw_response = await session.get(url)
             response = await raw_response.text()

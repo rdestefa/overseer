@@ -27,11 +27,11 @@ class Help(commands.Cog, name="help"):
         If no command is specified, the Overseer will list all commands from every Cog that it's loaded.
         """
         if command is not None:
-            # Trim prefix from command
+            # Trim prefix from command.
             command = command[1:] if command.startswith(
                 config['bot_prefix']) else command
 
-            # Search for matching command
+            # Search for matching command.
             cmds = list(self.bot.commands)
             cmd_names = [str(cmd) for cmd in cmds]
             if command in cmd_names:
@@ -44,7 +44,7 @@ class Help(commands.Cog, name="help"):
                 await context.send(embed=embed)
                 return
 
-            # Command not found
+            # Command not found.
             raise commands.CommandNotFound(f'Command "{command}" is not found')
 
         prefix = config["bot_prefix"]
