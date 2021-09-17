@@ -1,21 +1,14 @@
-# help.py
+# overseer.cogs.help
 
-import json
 import logging
-import logging.config
-import os
-import sys
+
+from helpers.config_helpers import load_bot_configs
 
 import discord
 from discord.ext import commands
 
 # Bot and logger configs
-if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open("config.json") as file:
-        config = json.load(file)
-
+config = load_bot_configs()
 logger = logging.getLogger()
 
 
@@ -38,19 +31,18 @@ class Help(commands.Cog, name="help"):
             command = command[1:] if command.startswith(
                 config['bot_prefix']) else command
 
-            # Search for command within cogs
-            for i in self.bot.cogs:
-                cmds = self.bot.get_cog(i.lower()).get_commands()
-                cmd_names = [cmd.name for cmd in cmds]
-                if command in cmd_names:
-                    cmd = cmds[cmd_names.index(command)]
-                    embed = discord.Embed(
-                        title=f"{cmd.name.capitalize()} (Usage: `{cmd.usage}`)",
-                        description=f"{cmd.help}",
-                        color=0x42F56C
-                    )
-                    await context.send(embed=embed)
-                    return
+            # Search for matching command
+            cmds = list(self.bot.commands)
+            cmd_names = [str(cmd) for cmd in cmds]
+            if command in cmd_names:
+                cmd = cmds[cmd_names.index(command)]
+                embed = discord.Embed(
+                    title=f"{cmd.name.capitalize()} (Usage: `{config['bot_prefix']}{cmd.usage}`)",
+                    description=f"{cmd.help}",
+                    color=0x42F56C
+                )
+                await context.send(embed=embed)
+                return
 
             # Command not found
             raise commands.CommandNotFound(f'Command "{command}" is not found')

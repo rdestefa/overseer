@@ -1,12 +1,11 @@
-# fun.py
+# overseer.cogs.fun
 
 import asyncio
 import json
 import logging
-import logging.config
-import os
 import random
-import sys
+
+from helpers.config_helpers import load_bot_configs
 
 import aiohttp
 import discord
@@ -14,12 +13,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 # Bot and logger configs
-if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open("config.json") as file:
-        config = json.load(file)
-
+config = load_bot_configs()
 logger = logging.getLogger()
 
 
@@ -113,20 +107,22 @@ class Fun(commands.Cog, name="fun"):
                 name=context.author.display_name, icon_url=context.author.avatar_url)
             await choose_message.clear_reactions()
 
+            choices_message = f"You've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+
             if user_choice_index == bot_choice_index:
-                result_embed.description = f"**That's a draw!**\nYou've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+                result_embed.description = f"**That's a draw!**\n{choices_message}"
                 result_embed.colour = 0xF59E42
             elif user_choice_index == 0 and bot_choice_index == 2:
-                result_embed.description = f"**You won!**\nYou've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+                result_embed.description = f"**You won!**\n{choices_message}"
                 result_embed.colour = 0x42F56C
             elif user_choice_index == 1 and bot_choice_index == 0:
-                result_embed.description = f"**You won!**\nYou've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+                result_embed.description = f"**You won!**\n{choices_message}"
                 result_embed.colour = 0x42F56C
             elif user_choice_index == 2 and bot_choice_index == 1:
-                result_embed.description = f"**You won!**\nYou've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+                result_embed.description = f"**You won!**\n{choices_message}"
                 result_embed.colour = 0x42F56C
             else:
-                result_embed.description = f"**I won!**\nYou've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+                result_embed.description = f"**I won!**\n{choices_message}"
                 result_embed.colour = 0xE02B2B
                 await choose_message.add_reaction("🇱")
             await choose_message.edit(embed=result_embed)
@@ -188,7 +184,7 @@ class Fun(commands.Cog, name="fun"):
     @commands.command(
         name="bitcoin",
         usage="bitcoin",
-        brief="Get the current price of Bitcoin"
+        brief="Get the current price of Bitcoin."
     )
     async def bitcoin(self, context):
         """

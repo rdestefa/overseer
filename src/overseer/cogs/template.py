@@ -1,20 +1,13 @@
-# template.py
+# overseer.cogs.template
 
-import json
 import logging
-import logging.config
-import os
-import sys
+
+from helpers.config_helpers import load_bot_configs
 
 from discord.ext import commands
 
 # Bot and logger configs
-if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open("config.json") as file:
-        config = json.load(file)
-
+config = load_bot_configs()
 logger = logging.getLogger()
 
 

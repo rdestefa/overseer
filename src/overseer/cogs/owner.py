@@ -1,10 +1,9 @@
-# owner.py
+# overseer.cogs.owner
 
 import json
 import logging
-import logging.config
-import os
-import sys
+
+from helpers.config_helpers import load_bot_configs
 
 import discord
 from discord.ext import commands
@@ -12,12 +11,7 @@ from discord.ext import commands
 from helpers import json_helpers
 
 # Bot and logger configs
-if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open("config.json") as file:
-        config = json.load(file)
-
+config = load_bot_configs()
 logger = logging.getLogger()
 
 

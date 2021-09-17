@@ -2,9 +2,10 @@
 .env
 
 # Config files
-config.json
+config.yaml
 blacklist.json
 logging_config.yaml
+overseer-info.txt
 
 # Log files
 *.log

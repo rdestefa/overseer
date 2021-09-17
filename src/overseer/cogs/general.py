@@ -1,22 +1,15 @@
-# general.py
+# overseer.cogs.general
 
-import json
 import logging
-import logging.config
-import os
 import platform
-import sys
+
+from helpers.config_helpers import load_bot_configs
 
 import discord
 from discord.ext import commands
 
 # Bot and logger configs
-if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open("config.json") as file:
-        config = json.load(file)
-
+config = load_bot_configs()
 logger = logging.getLogger()
 
 
