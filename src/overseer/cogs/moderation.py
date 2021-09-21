@@ -17,9 +17,50 @@ class Moderation(commands.Cog, name="moderation"):
         self.bot = bot
 
     @commands.command(
+        name="ban",
+        usage="ban <@user> <reason>",
+        brief="Ban a user from the server."
+    )
+    @commands.has_permissions(ban_members=True)
+    async def ban(self, context, member: discord.Member, *, reason="Not specified"):
+        """
+        Ban a user from the server. Must have ban permissions.
+        """
+        try:
+            if member.guild_permissions.administrator:
+                logger.warning(
+                    "Cannot ban %s: Users with Admin permissions cannot be banned.", member)
+                embed = discord.Embed(
+                    title="Error!",
+                    description="User has Admin permissions.",
+                    color=0xE02B2B
+                )
+            else:
+                await member.ban(reason=reason)
+                embed = discord.Embed(
+                    title="User Banned!",
+                    description=f"**{member}** was banned by **{context.message.author}**!",
+                    color=0x42F56C
+                )
+                embed.add_field(
+                    name="Reason",
+                    value=reason
+                )
+                await member.send(f"You were banned by **{context.message.author}**!\nReason: {reason}")
+        except Exception as e:
+            logger.error(
+                "Failed to ban %s (%s): %s", member, type(e).__name__, str(e))
+            embed = discord.Embed(
+                title="Error!",
+                description="An error occurred while trying to ban the user. Make sure my role is above the role of the user you want to ban.",
+                color=0xE02B2B
+            )
+        finally:
+            await context.send(embed=embed)
+
+    @commands.command(
         name='kick',
         usage="kick <@user> <reason>",
-        pass_context=True,
         brief="Kick a user out of the server."
     )
     @commands.has_permissions(kick_members=True)
@@ -41,30 +82,29 @@ class Moderation(commands.Cog, name="moderation"):
         else:
             try:
                 await member.kick(reason=reason)
-                embed = discord.Embed(
-                    title="User Kicked!",
-                    description=f"**{member}** was kicked by **{context.message.author}**!",
-                    color=0x42F56C
-                )
-                embed.add_field(
-                    name="Reason",
-                    value=reason
-                )
-                await context.send(embed=embed)
                 try:
                     await member.send(
-                        f"You were kicked by **{context.message.author}**!\nReason: {reason}"
-                    )
+                        f"You were kicked by **{context.message.author}**!\nReason: {reason}")
                 except Exception as e:
-                    logger.error('Failed to DM %s: %s', member, str(e))
+                    logger.error(
+                        "Failed to DM %s (%s): %s", member, type(e).__name__, str(e))
             except Exception as e:
-                logger.error('Failed to kick %s: %s', member, str(e))
+                logger.error(
+                    "Failed to kick %s (%s): %s", member, type(e).__name__, str(e))
                 embed = discord.Embed(
                     title="Error!",
                     description="An error occurred while trying to kick the user. Make sure my role supersedes that of the user you want to kick.",
                     color=0xE02B2B
                 )
-                await context.message.channel.send(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="User Kicked!",
+                    description=f"**{member}** was kicked by **{context.message.author}**!",
+                    color=0x42F56C
+                )
+                embed.add_field(name="Reason", value=reason)
+            finally:
+                await context.send(embed=embed)
 
     @commands.command(
         name="nick",
@@ -78,87 +118,22 @@ class Moderation(commands.Cog, name="moderation"):
         """
         try:
             await member.edit(nick=nickname)
+        except Exception as e:
+            logger.error(
+                "Failed to change nickname of %s (%s): %s", member, type(e).__name__, str(e))
+            embed = discord.Embed(
+                title="Error!",
+                description=f"An error occurred while trying to change the nickname of **{member}**. Make sure my role supersedes the role of the user for whom you want to change the nickname.",
+                color=0xE02B2B
+            )
+        else:
             embed = discord.Embed(
                 title="Changed Nickname!",
                 description=f"**{member}'s** new nickname is **{nickname}**!",
                 color=0x42F56C
             )
+        finally:
             await context.send(embed=embed)
-        except Exception as e:
-            logger.error('Failed to change nickname of %s: %s', member, str(e))
-            embed = discord.Embed(
-                title="Error!",
-                description=f"An error occurred while trying to change the nickname of **{member}**. Make sure my role is above the role of the user you want to change the nickname.",
-                color=0xE02B2B
-            )
-            await context.message.channel.send(embed=embed)
-
-    @commands.command(
-        name="ban",
-        usage="ban <@user> <reason>",
-        brief="Ban a user from the server."
-    )
-    @commands.has_permissions(ban_members=True)
-    async def ban(self, context, member: discord.Member, *, reason="Not specified"):
-        """
-        Ban a user from the server. Must have ban permissions.
-        """
-        try:
-            if member.guild_permissions.administrator:
-                logger.warning(
-                    "Cannot ban %s: Users with Admin permissions cannot be banned.", member)
-                embed = discord.Embed(
-                    title="Error!",
-                    description="User has Admin permissions.",
-                    color=0xE02B2B
-                )
-                await context.send(embed=embed)
-            else:
-                await member.ban(reason=reason)
-                embed = discord.Embed(
-                    title="User Banned!",
-                    description=f"**{member}** was banned by **{context.message.author}**!",
-                    color=0x42F56C
-                )
-                embed.add_field(
-                    name="Reason",
-                    value=reason
-                )
-                await context.send(embed=embed)
-                await member.send(f"You were banned by **{context.message.author}**!\nReason: {reason}")
-        except Exception as e:
-            logger.error('Failed to ban %s: %s', member, str(e))
-            embed = discord.Embed(
-                title="Error!",
-                description="An error occurred while trying to ban the user. Make sure my role is above the role of the user you want to ban.",
-                color=0xE02B2B
-            )
-            await context.send(embed=embed)
-
-    @commands.command(
-        name="warn",
-        usage="warn <@user> <reason>",
-        brief="Warn a user."
-    )
-    @commands.has_permissions(manage_messages=True)
-    async def warn(self, context, member: discord.Member, *, reason="Not specified"):
-        """
-        Direct messages a user with a stern warning.
-        """
-        embed = discord.Embed(
-            title="User Warned!",
-            description=f"**{member}** was warned by **{context.message.author}**!",
-            color=0x42F56C
-        )
-        embed.add_field(
-            name="Reason",
-            value=reason
-        )
-        await context.send(embed=embed)
-        try:
-            await member.send(f"You were warned by **{context.message.author}**!\nReason: {reason}")
-        except Exception as e:
-            logger.error('Failed to warn %s: %s', member, str(e))
 
     @commands.command(
         name="purge",
@@ -190,6 +165,32 @@ class Moderation(commands.Cog, name="moderation"):
             color=0x42F56C
         )
         await context.send(embed=embed)
+
+    @commands.command(
+        name="warn",
+        usage="warn <@user> <reason>",
+        brief="Warn a user."
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def warn(self, context, member: discord.Member, *, reason="Not specified"):
+        """
+        Direct messages a user with a stern warning.
+        """
+        embed = discord.Embed(
+            title="User Warned!",
+            description=f"**{member}** was warned by **{context.message.author}**!",
+            color=0x42F56C
+        )
+        embed.add_field(
+            name="Reason",
+            value=reason
+        )
+        await context.send(embed=embed)
+        try:
+            await member.send(f"You were warned by **{context.message.author}**!\nReason: {reason}")
+        except Exception as e:
+            logger.error(
+                "Failed to warn %s (%s): %s", member, type(e).__name__, str(e))
 
 
 def setup(bot):

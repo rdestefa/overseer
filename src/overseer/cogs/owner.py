@@ -19,78 +19,10 @@ class Owner(commands.Cog, name="owner"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        name="shutdown",
-        usage="shutdown",
-        brief="Shut down the Overseer...for now."
-    )
-    async def shutdown(self, context):
-        """
-        Shut down the Overseer bot. Only the Overseer's owner can do this.
-        """
-        if context.message.author.id in config["owners"]:
-            embed = discord.Embed(
-                description="Shutting down :wave:. We'll meet again.",
-                color=0x42F56C
-            )
-            await context.send(embed=embed)
-            await self.bot.close()
-        else:
-            embed = discord.Embed(
-                title="Error!",
-                description="You don't have permission to shut down the Overseer.",
-                color=0xE02B2B
-            )
-            await context.send(embed=embed)
-
-    @commands.command(
-        name="say",
-        aliases=["echo"],
-        usage="say <message>",
-        brief="The Overseer says what you're thinking."
-    )
-    async def say(self, context, *, args):
-        """
-        The Overseer will say what you're thinking so you don't have to.
-        Only the Overseer's owner can do this.
-        """
-        if context.message.author.id in config["owners"]:
-            await context.send(args)
-        else:
-            embed = discord.Embed(
-                title="Error!",
-                description="You don't have the permission to use this command.",
-                color=0xE02B2B
-            )
-            await context.send(embed=embed)
-
-    @commands.command(
-        name="embed",
-        usage="embed <message>",
-        brief="The Overseer embeds what you're thinking."
-    )
-    async def embed(self, context, *, args):
-        """
-        The Overseer will say what you're thinking, but within embeds.
-        """
-        if context.message.author.id in config["owners"]:
-            embed = discord.Embed(
-                description=args,
-                color=0x42F56C
-            )
-            await context.send(embed=embed)
-        else:
-            embed = discord.Embed(
-                title="Error!",
-                description="You don't have the permission to use this command.",
-                color=0xE02B2B
-            )
-            await context.send(embed=embed)
-
     @commands.group(
         name="blacklist",
         usage="blacklist",
-        brief="Edit the Overseer's blacklist."
+        brief="Print the Overseer's blacklist."
     )
     async def blacklist(self, context):
         """
@@ -101,100 +33,135 @@ class Owner(commands.Cog, name="owner"):
         if context.invoked_subcommand is None:
             with open("blacklist.json") as file:
                 blacklist = json.load(file)
+
             embed = discord.Embed(
                 title=f"There are currently {len(blacklist['ids'])} blacklisted IDs",
                 description=f"{', '.join(str(id) for id in blacklist['ids'])}",
-                color=0x0000FF
+                color=0x000000
             )
             await context.send(embed=embed)
 
     @blacklist.command(
         name="add",
         usage="add <@user>",
-        brief="Add a user to the Overseer's blacklist."
+        brief="Add a user to the blacklist."
     )
+    @commands.is_owner()
     async def blacklist_add(self, context, member: discord.Member = None):
         """
         Add a user to the Overseer's blacklist.
         """
-        if context.message.author.id in config["owners"]:
-            userID = member.id
-            try:
-                with open("blacklist.json") as file:
-                    blacklist = json.load(file)
-                if (userID in blacklist['ids']):
-                    embed = discord.Embed(
-                        title="Error!",
-                        description=f"**{member.name}** is already in the blacklist.",
-                        color=0xE02B2B
-                    )
-                    await context.send(embed=embed)
-                    return
-                json_helpers.add_user_to_blacklist(userID)
+        try:
+            with open("blacklist.json") as file:
+                blacklist = json.load(file)
+
+            # There shouldn't be duplicates in the blacklist.
+            if member.id in blacklist['ids']:
+                logger.warning("%s is already blacklisted", member.name)
                 embed = discord.Embed(
-                    title="User Blacklisted",
-                    description=f"**{member.name}** has been successfully added to the blacklist",
-                    color=0x42F56C
-                )
-                with open("blacklist.json") as file:
-                    blacklist = json.load(file)
-                embed.set_footer(
-                    text=f"There are now {len(blacklist['ids'])} users in the blacklist"
-                )
-                await context.send(embed=embed)
-            except:
-                embed = discord.Embed(
-                    title="Error!",
-                    description=f"An unknown error occurred when trying to add **{member.name}** to the blacklist.",
+                    title="User Already Blacklisted!",
+                    description=f"**{member.name}** is already in the blacklist.",
                     color=0xE02B2B
                 )
                 await context.send(embed=embed)
-        else:
+                return
+
+            json_helpers.add_user_to_blacklist(member.id)
+        except Exception as e:
+            logger.error(
+                "Failed to blacklist %s (%s): %s",
+                member.name,
+                type(e).__name__,
+                str(e)
+            )
             embed = discord.Embed(
                 title="Error!",
-                description="You don't have the permission to use this command.",
+                description=f"Something went wrong when trying to add **{member.name}** to the blacklist: {str(e)}",
                 color=0xE02B2B
             )
+        else:
+            with open("blacklist.json") as file:
+                blacklist = json.load(file)
+
+            embed = discord.Embed(
+                title="User Blacklisted",
+                description=f"**{member.name}** has been successfully added to the blacklist",
+                color=0x42F56C
+            )
+            embed.set_footer(
+                text=f"There are now {len(blacklist['ids'])} users in the blacklist"
+            )
+        finally:
             await context.send(embed=embed)
 
     @blacklist.command(
         name="remove",
         usage="remove <@user>",
-        brief="Remove a user from the Overseer's blacklist"
+        brief="Remove a user from the blacklist."
     )
+    @commands.is_owner()
     async def blacklist_remove(self, context, member: discord.Member = None):
         """
         Remove a user from the Overseer's blacklist.
         """
-        if context.message.author.id in config["owners"]:
-            userID = member.id
-            try:
-                json_helpers.remove_user_from_blacklist(userID)
-                embed = discord.Embed(
-                    title="User removed from blacklist",
-                    description=f"**{member.name}** has been successfully removed from the blacklist",
-                    color=0x42F56C
-                )
-                with open("blacklist.json") as file:
-                    blacklist = json.load(file)
-                embed.set_footer(
-                    text=f"There are now {len(blacklist['ids'])} users in the blacklist"
-                )
-                await context.send(embed=embed)
-            except:
-                embed = discord.Embed(
-                    title="Error!",
-                    description=f"**{member.name}** is not in the blacklist.",
-                    color=0xE02B2B
-                )
-                await context.send(embed=embed)
-        else:
+        try:
+            json_helpers.remove_user_from_blacklist(member.id)
+        except ValueError as e:
+            logger.error(
+                "%s is not in the blacklist (%s): %s",
+                member.name,
+                type(e).__name__,
+                str(e)
+            )
             embed = discord.Embed(
-                title="Error!",
-                description="You don't have the permission to use this command.",
+                title="User Not Blacklisted!",
+                description=f"**{member.name}** is not in the blacklist.",
                 color=0xE02B2B
             )
+        except Exception as e:
+            logger.error(
+                "Failed to remove %s from blacklist (%s): %s",
+                member.name,
+                type(e).__name__,
+                str(e)
+            )
+            embed = discord.Embed(
+                title="Error!",
+                description=f"Something went wrong when trying to remove **{member.name}** from the blacklist: {str(e)}",
+                color=0xE02B2B
+            )
+        else:
+            with open("blacklist.json") as file:
+                blacklist = json.load(file)
+
+            embed = discord.Embed(
+                title="User Removed From Blacklist",
+                description=f"**{member.name}** has been successfully removed from the blacklist.",
+                color=0x42F56C
+            )
+            embed.set_footer(
+                text=f"There are now {len(blacklist['ids'])} users in the blacklist."
+            )
+        finally:
             await context.send(embed=embed)
+
+    @commands.command(
+        name="shutdown",
+        usage="shutdown",
+        brief="Shut down the Overseer...for now."
+    )
+    @commands.is_owner()
+    async def shutdown(self, context):
+        """
+        Shut down the Overseer bot. Only the Overseer's owner can do this.
+        """
+        logger.info("Shutting down the Overseer")
+        embed = discord.Embed(
+            description="Shutting down :wave:. We'll meet again.",
+            color=0x42F56C
+        )
+        await context.send(embed=embed)
+        await self.bot.close()
 
 
 def setup(bot):

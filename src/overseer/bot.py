@@ -26,10 +26,12 @@ intents = discord.Intents.all()
 
 # Initialize bot instance
 bot = Bot(
-    command_prefix=config["bot_prefix"],    # Set command prefix.
-    intents=intents,                        # Set intents.
-    activity=activity,                      # Set the Overseer's status.
-    help_command=None                       # Remove default help command.
+    owner_ids=set(config["owners"]),      # Owners of the Overseer.
+    command_prefix=config["bot_prefix"],  # Set command prefix.
+    intents=intents,                      # Set intents.
+    activity=activity,                    # Set the Overseer's status.
+    help_command=None,                    # Remove default help command.
+    strip_after_prefix=True               # !   <command> becomes !<command>.
 )
 
 
@@ -80,27 +82,33 @@ async def on_message(message):
 
 # Executes every time a command has been *successfully* executed.
 @bot.event
-async def on_command_completion(ctx):
-    fullCommandName = ctx.command.qualified_name
-    executedCommand = str(fullCommandName.split(" ")[0])
+async def on_command_completion(context):
+    completed_command = context.command.qualified_name
     logger.debug(
-        "Executed %s in %s (ID: %s) by %s (ID: %s)",
-        executedCommand,
-        ctx.guild.name,
-        ctx.message.guild.id,
-        ctx.message.author,
-        ctx.message.author.id
+        "%s (ID: %s) executed %s in %s (ID: %s)",
+        context.message.author,
+        context.message.author.id,
+        completed_command,
+        context.guild.name,
+        context.message.guild.id
     )
 
 
 # Executes every time a valid command raises an error.
 @bot.event
 async def on_command_error(context, error):
-    failedCommand = context.invoked_with
-    logger.error("Failed to execute %s: %s", failedCommand, str(error))
+    failed_command = context.command.qualified_name
+    logger.error(
+        "%s (ID: %s) failed to execute %s (%s): %s",
+        context.message.author,
+        context.message.author.id,
+        failed_command,
+        type(error).__name__,
+        str(error)
+    )
 
     # Get custom message based on the error and send to the user.
-    embed = handle_error(bot, error, failedCommand, config["bot_prefix"])
+    embed = handle_error(bot, error, failed_command, config["bot_prefix"])
     await context.send(embed=embed)
 
 

@@ -12,11 +12,11 @@ def handle_command_not_found(
     error: commands.CommandNotFound,
     prefix: str
 ) -> discord.Embed:
-    # Don't use failed_command in case the error was raised from !help.
-    invalidCommand = str(error).split()[1].strip('"')
+    # Don't use failed command in case the error was raised from !help.
+    invalidCommand = str(error).split('"')[1]
 
     # Calculate Levenshtein distance from valid commands for recommendation.
-    cmds = list(bot.commands)
+    cmds = list(bot.walk_commands())
     lev_dists = [lev.distance(invalidCommand, str(cmd))
                  / max(len(invalidCommand), len(str(cmd))) for cmd in cmds]
     lev_min = min(lev_dists)
@@ -38,8 +38,22 @@ def handle_command_not_found(
     return embed
 
 
+def handle_command_on_cooldown(error: commands.CommandOnCooldown) -> discord.Embed:
+    minutes, seconds = divmod(error.retry_after, 60)
+    hours, minutes = divmod(minutes, 60)
+    hours = hours % 24
+
+    embed = discord.Embed(
+        title="Hey! Slow down!",
+        description=f"You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
+        color=0xE02B2B
+    )
+
+    return embed
+
+
 def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:
-    invalid_member = str(error).split()[1].strip('"')
+    invalid_member = str(error).split('"')[1]
     embed = discord.Embed(
         title="Member Not Found!",
         description=f"I looked everywhere, but I couldn't find `{invalid_member}` in the server.",
@@ -49,14 +63,10 @@ def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:
     return embed
 
 
-def handle_command_on_cooldown(error: commands.CommandOnCooldown) -> discord.Embed:
-    minutes, seconds = divmod(error.retry_after, 60)
-    hours, minutes = divmod(minutes, 60)
-    hours = hours % 24
-
+def handle_not_owner(failed_command: str, prefix: str) -> discord.Embed:
     embed = discord.Embed(
-        title="Hey! Slow down!",
-        description=f"You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
+        title="Not an Owner!",
+        description=f"Only the Overseer's owners can execute `{prefix}{failed_command}`.",
         color=0xE02B2B
     )
 
@@ -126,10 +136,12 @@ def handle_error(
 ) -> discord.Embed:
     if isinstance(error, commands.CommandNotFound):
         return handle_command_not_found(bot, error, prefix)
-    elif isinstance(error, commands.MemberNotFound):
-        return handle_member_not_found(error)
     elif isinstance(error, commands.CommandOnCooldown):
         return handle_command_on_cooldown(error)
+    elif isinstance(error, commands.MemberNotFound):
+        return handle_member_not_found(error)
+    elif isinstance(error, commands.NotOwner):
+        return handle_not_owner(failed_command, prefix)
     elif isinstance(error, commands.MissingPermissions):
         return handle_missing_permissions(error)
     elif isinstance(error, commands.MissingRequiredArgument):

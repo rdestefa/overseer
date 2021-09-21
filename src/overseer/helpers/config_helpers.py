@@ -10,7 +10,7 @@ import yaml
 import discord
 
 
-def load_bot_configs(config_path: str = "config.yaml") -> dict[str, Any]:
+def load_bot_configs(config_path: str = "bot_config.yaml") -> dict[str, Any]:
     if not os.path.isfile(config_path):
         sys.exit(f"'{config_path}' not found! Please add it and try again.")
     else:
@@ -32,7 +32,7 @@ def load_logger(config_path: str = "logging_config.yaml") -> logging.Logger:
 
 
 def load_all_configs(
-    bot_config_path: str = "config.yaml",
+    bot_config_path: str = "bot_config.yaml",
     logger_config_path: str = "logging_config.yaml",
 ) -> tuple[dict[str, Any], logging.Logger, discord.Intents]:
     bot_configs = load_bot_configs(bot_config_path)

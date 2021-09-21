@@ -21,7 +21,7 @@ class Help(commands.Cog, name="help"):
         usage="help <command>",
         brief="List one or all of the Overseer's commands."
     )
-    async def help(self, context, command=None):
+    async def help(self, context, *, command=None):
         """
         Display help text for a specific command.
         If no command is specified, the Overseer will list all commands from every Cog that it's loaded.
@@ -32,12 +32,11 @@ class Help(commands.Cog, name="help"):
                 config['bot_prefix']) else command
 
             # Search for matching command.
-            cmds = list(self.bot.commands)
-            cmd_names = [str(cmd) for cmd in cmds]
-            if command in cmd_names:
-                cmd = cmds[cmd_names.index(command)]
+            if (cmd := self.bot.get_command(command)) is not None:
+                title = (f"{cmd.name.capitalize()} (Usage: `{config['bot_prefix']}{cmd.usage}`)" if not cmd.parents
+                         else f"{cmd.qualified_name.title()} (Usage: `{config['bot_prefix']}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
                 embed = discord.Embed(
-                    title=f"{cmd.name.capitalize()} (Usage: `{config['bot_prefix']}{cmd.usage}`)",
+                    title=title,
                     description=f"{cmd.help}",
                     color=0x42F56C
                 )
@@ -55,16 +54,16 @@ class Help(commands.Cog, name="help"):
             description="Witness the extent of my power.",
             color=0x42F56C
         )
-        for i in self.bot.cogs:
-            cog = self.bot.get_cog(i.lower())
-            cmds = cog.get_commands()
-            cmd_list = [cmd.usage for cmd in cmds]
-            cmd_description = [cmd.brief for cmd in cmds]
+        for cog_name in self.bot.cogs:
+            cog = self.bot.get_cog(cog_name.lower())
+            cmd_attrs = [(cmd.usage, cmd.brief, cmd.parents)
+                         for cmd in cog.walk_commands()]
 
-            help_text = '\n'.join(
-                f'{prefix}{n} - {h}' for n, h in zip(cmd_list,
-                                                     cmd_description))
-            embed.add_field(name=i.capitalize(),
+            help_text = "\n".join(
+                f"{prefix}{usage} - {brief}" if not parents
+                else f"{'  ' * len(parents)}+ {usage} - {brief}"
+                for usage, brief, parents in cmd_attrs)
+            embed.add_field(name=cog_name.capitalize(),
                             value=f'```{help_text}```', inline=False)
         await context.send(embed=embed)
 

@@ -55,6 +55,45 @@ class General(commands.Cog, name="general"):
         await context.send(embed=embed)
 
     @commands.command(
+        name="invite",
+        usage="invite",
+        brief="Get the Overseer's invite link."
+    )
+    async def invite(self, context):
+        """
+        Get the Overseer's invite link to share with other servers.
+        """
+        embed = discord.Embed(
+            description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
+            color=0xD75BF4
+        )
+
+        try:
+            # Needs permissions to do this.
+            await context.author.send(embed=embed)
+            await context.send(f"Psst! {context.author.mention}, I sent you a private message!")
+        except discord.Forbidden:
+            logger.warning(
+                "Overseer doesn't have permission to DM %s", context.author)
+            await context.send(embed=embed)
+
+    @commands.command(
+        name="ping",
+        usage="ping",
+        brief="Check if the Overseer is alive."
+    )
+    async def ping(self, context):
+        """
+        Check if the Overseer is alive.
+        """
+        embed = discord.Embed(
+            title="🏓 Pong!",
+            description=f"The Overseer's latency is {round(self.bot.latency * 1000)} ms.",
+            color=0x42F56C
+        )
+        await context.send(embed=embed)
+
+    @commands.command(
         name="serverinfo",
         usage="serverinfo",
         brief="Get basic information about the server."
@@ -108,45 +147,6 @@ class General(commands.Cog, name="general"):
             text=f"Created on {time}"
         )
         await context.send(embed=embed)
-
-    @commands.command(
-        name="ping",
-        usage="ping",
-        brief="Check if the Overseer is alive."
-    )
-    async def ping(self, context):
-        """
-        Check if the Overseer is alive.
-        """
-        embed = discord.Embed(
-            title="🏓 Pong!",
-            description=f"Overseer's latency is {round(self.bot.latency * 1000)}ms.",
-            color=0x42F56C
-        )
-        await context.send(embed=embed)
-
-    @commands.command(
-        name="invite",
-        usage="invite",
-        brief="Get the Overseer's invite link."
-    )
-    async def invite(self, context):
-        """
-        Get the Overseer's invite link to share with other servers.
-        """
-        embed = discord.Embed(
-            description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
-            color=0xD75BF4
-        )
-
-        try:
-            # Needs permissions to do this.
-            await context.author.send(embed=embed)
-            await context.send(f"Psst! {context.author.mention}, I sent you a private message!")
-        except discord.Forbidden:
-            logger.warning(
-                "Overseer doesn't have permission to DM %s", context.author)
-            await context.send(embed=embed)
 
 
 def setup(bot):
