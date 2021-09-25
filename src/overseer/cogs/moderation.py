@@ -2,13 +2,14 @@
 
 import logging
 
-from helpers.config_helpers import load_bot_configs
+from helpers.config_helpers import load_bot_configs, load_colors
 
 import discord
 from discord.ext import commands
 
-# Bot and logger configs
+# Bot, color, and logger configs.
 config = load_bot_configs()
+colors = load_colors()
 logger = logging.getLogger()
 
 
@@ -33,14 +34,14 @@ class Moderation(commands.Cog, name="moderation"):
                 embed = discord.Embed(
                     title="Error!",
                     description="User has Admin permissions.",
-                    color=0xE02B2B
+                    color=colors["red"]
                 )
             else:
                 await member.ban(reason=reason)
                 embed = discord.Embed(
                     title="User Banned!",
                     description=f"**{member}** was banned by **{context.message.author}**!",
-                    color=0x42F56C
+                    color=colors["green"]
                 )
                 embed.add_field(
                     name="Reason",
@@ -53,7 +54,7 @@ class Moderation(commands.Cog, name="moderation"):
             embed = discord.Embed(
                 title="Error!",
                 description="An error occurred while trying to ban the user. Make sure my role is above the role of the user you want to ban.",
-                color=0xE02B2B
+                color=colors["red"]
             )
         finally:
             await context.send(embed=embed)
@@ -76,7 +77,7 @@ class Moderation(commands.Cog, name="moderation"):
             embed = discord.Embed(
                 title="Error!",
                 description=f"**{member.name}** has Admin permissions.",
-                color=0xE02B2B
+                color=colors["red"]
             )
             await context.send(embed=embed)
         else:
@@ -94,13 +95,13 @@ class Moderation(commands.Cog, name="moderation"):
                 embed = discord.Embed(
                     title="Error!",
                     description="An error occurred while trying to kick the user. Make sure my role supersedes that of the user you want to kick.",
-                    color=0xE02B2B
+                    color=colors["red"]
                 )
             else:
                 embed = discord.Embed(
                     title="User Kicked!",
                     description=f"**{member}** was kicked by **{context.message.author}**!",
-                    color=0x42F56C
+                    color=colors["green"]
                 )
                 embed.add_field(name="Reason", value=reason)
             finally:
@@ -124,13 +125,13 @@ class Moderation(commands.Cog, name="moderation"):
             embed = discord.Embed(
                 title="Error!",
                 description=f"An error occurred while trying to change the nickname of **{member}**. Make sure my role supersedes the role of the user for whom you want to change the nickname.",
-                color=0xE02B2B
+                color=colors["red"]
             )
         else:
             embed = discord.Embed(
                 title="Changed Nickname!",
                 description=f"**{member}'s** new nickname is **{nickname}**!",
-                color=0x42F56C
+                color=colors["green"]
             )
         finally:
             await context.send(embed=embed)
@@ -152,7 +153,7 @@ class Moderation(commands.Cog, name="moderation"):
             embed = discord.Embed(
                 title="Error!",
                 description=f"`{amount}` must be a positive integer or -1.",
-                color=0xE02B2B
+                color=colors["red"]
             )
             await context.send(embed=embed)
             return
@@ -162,7 +163,7 @@ class Moderation(commands.Cog, name="moderation"):
         embed = discord.Embed(
             title="Chat Cleared!",
             description=f"**{context.message.author}** cleared **{len(purged_messages)}** messages!",
-            color=0x42F56C
+            color=colors["green"]
         )
         await context.send(embed=embed)
 
@@ -179,7 +180,7 @@ class Moderation(commands.Cog, name="moderation"):
         embed = discord.Embed(
             title="User Warned!",
             description=f"**{member}** was warned by **{context.message.author}**!",
-            color=0x42F56C
+            color=colors["yellow"]
         )
         embed.add_field(
             name="Reason",

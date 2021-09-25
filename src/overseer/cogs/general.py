@@ -3,13 +3,14 @@
 import logging
 import platform
 
-from helpers.config_helpers import load_bot_configs
+from helpers.config_helpers import load_bot_configs, load_colors
 
 import discord
 from discord.ext import commands
 
-# Bot and logger configs
+# Bot, color, and logger configs.
 config = load_bot_configs()
+colors = load_colors()
 logger = logging.getLogger()
 
 
@@ -29,7 +30,7 @@ class General(commands.Cog, name="general"):
         """
         embed = discord.Embed(
             description="I belong to the almighty Creenis",
-            color=0x42F56C
+            color=colors["green"]
         )
         embed.set_author(
             name="Bot Information"
@@ -65,7 +66,7 @@ class General(commands.Cog, name="general"):
         """
         embed = discord.Embed(
             description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
-            color=0xD75BF4
+            color=colors["purple"]
         )
 
         try:
@@ -89,7 +90,7 @@ class General(commands.Cog, name="general"):
         embed = discord.Embed(
             title="🏓 Pong!",
             description=f"The Overseer's latency is {round(self.bot.latency * 1000)} ms.",
-            color=0x42F56C
+            color=colors["green"]
         )
         await context.send(embed=embed)
 
@@ -117,7 +118,7 @@ class General(commands.Cog, name="general"):
         embed = discord.Embed(
             title="**Server Name**",
             description=f"{server}",
-            color=0x42F56C
+            color=colors["green"]
         )
         embed.set_thumbnail(
             url=server.icon_url

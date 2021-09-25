@@ -2,13 +2,14 @@
 
 import logging
 
-from helpers.config_helpers import load_bot_configs
+from helpers.config_helpers import load_bot_configs, load_colors
 
 import discord
 from discord.ext import commands
 
-# Bot and logger configs
+# Bot, color, and logger configs.
 config = load_bot_configs()
+colors = load_colors()
 logger = logging.getLogger()
 
 
@@ -38,7 +39,7 @@ class Help(commands.Cog, name="help"):
                 embed = discord.Embed(
                     title=title,
                     description=f"{cmd.help}",
-                    color=0x42F56C
+                    color=colors["green"]
                 )
                 await context.send(embed=embed)
                 return
@@ -52,7 +53,7 @@ class Help(commands.Cog, name="help"):
         embed = discord.Embed(
             title="Help",
             description="Witness the extent of my power.",
-            color=0x42F56C
+            color=colors["green"]
         )
         for cog_name in self.bot.cogs:
             cog = self.bot.get_cog(cog_name.lower())

@@ -17,7 +17,7 @@ from discord.ext.commands import Bot
 # ------------------------- BOT CONFIGS AND INTENTS ------------------------- #
 
 
-config, logger = load_all_configs()
+config, logger, colors = load_all_configs()
 activity = discord.Activity(name="You", type=discord.ActivityType.watching)
 
 # Currently all intents are enabled, but custom intents can be set with
@@ -73,7 +73,7 @@ async def on_message(message):
     if message.author == bot.user or message.author.bot:
         return
     # Ignores if a command is being executed by a blacklisted user.
-    with open("blacklist.json") as file:
+    with open("lists/blacklist.json") as file:
         blacklist = json.load(file)
     if message.author.id in blacklist["ids"]:
         return
@@ -97,7 +97,9 @@ async def on_command_completion(context):
 # Executes every time a valid command raises an error.
 @bot.event
 async def on_command_error(context, error):
-    failed_command = context.command.qualified_name
+    # `command.qualified_name` won't populate on a nonexistent command.
+    failed_command = (context.command.qualified_name if context.command
+                      else context.invoked_with)
     logger.error(
         "%s (ID: %s) failed to execute %s (%s): %s",
         context.message.author,
@@ -108,7 +110,8 @@ async def on_command_error(context, error):
     )
 
     # Get custom message based on the error and send to the user.
-    embed = handle_error(bot, error, failed_command, config["bot_prefix"])
+    embed = handle_error(bot, error, failed_command,
+                         config["bot_prefix"], colors["red"])
     await context.send(embed=embed)
 
 

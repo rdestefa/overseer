@@ -5,7 +5,7 @@ import json
 import logging
 import random
 
-from helpers.config_helpers import load_bot_configs
+from helpers.config_helpers import load_bot_configs, load_colors
 from helpers.json_helpers import increment_gintama_count, reset_gintama_count
 
 import aiohttp
@@ -13,8 +13,9 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-# Bot and logger configs
+# Bot, color, and logger configs.
 config = load_bot_configs()
+colors = load_colors()
 logger = logging.getLogger()
 
 
@@ -40,7 +41,7 @@ class Fun(commands.Cog, name="fun"):
             embed = discord.Embed(
                 title=":information_source: Crypto",
                 description=f"Bitcoin price is: ${response['bpi']['USD']['rate']}",
-                color=0x42F56C
+                color=colors["green"]
             )
             await context.send(embed=embed)
 
@@ -73,7 +74,7 @@ class Fun(commands.Cog, name="fun"):
                 if request.status == 200:
                     data = await request.json()
                     embed = discord.Embed(
-                        description=data["text"], color=0xD75BF4)
+                        description=data["text"], color=colors["purple"])
                     await context.send(embed=embed)
                 else:
                     logger.warning(
@@ -81,7 +82,7 @@ class Fun(commands.Cog, name="fun"):
                     embed = discord.Embed(
                         title="Error!",
                         description="There's an issue with the useless facts API. Please try again later",
-                        color=0xE02B2B
+                        color=colors["red"]
                     )
                     await context.send(embed=embed)
                     # We need to reset the cooldown since the user didn't get their daily fact.
@@ -98,7 +99,7 @@ class Fun(commands.Cog, name="fun"):
         """
         embed = discord.Embed(
             description=args,
-            color=0x42F56C
+            color=colors["green"]
         )
         await context.send(embed=embed)
 
@@ -117,7 +118,7 @@ class Fun(commands.Cog, name="fun"):
             embed = discord.Embed(
                 title="Gintama Reference Counter",
                 description=f"Declan has mentioned Gintama {count_str} in consecutive conversations.",
-                color=0x42F56C
+                color=colors["green"]
             )
             await context.send(embed=embed)
 
@@ -132,9 +133,9 @@ class Fun(commands.Cog, name="fun"):
         """
         reset_gintama_count()
         embed = discord.Embed(
-            title="Reset Gintama Reference Counter",
+            title="No Gintama References Today",
             description="Declan didn't mention Gintama today, so we'll reset his reference counter.",
-            color=0xEDED15
+            color=colors["yellow"]
         )
         await context.send(embed=embed)
 
@@ -151,7 +152,7 @@ class Fun(commands.Cog, name="fun"):
         embed = discord.Embed(
             title="A new poll has been created!",
             description=f"{title}",
-            color=0x42F56C
+            color=colors["green"]
         )
         embed.set_footer(
             text=f"Poll created by: {context.message.author} • React to vote!"
@@ -181,7 +182,8 @@ class Fun(commands.Cog, name="fun"):
             "🧻": 1,
             "✂": 2
         }
-        embed = discord.Embed(title="Choose your weapon!", color=0xF59E42)
+        embed = discord.Embed(title="Choose your weapon!",
+                              color=colors["orange"])
         embed.set_author(name=context.author.display_name,
                          icon_url=context.author.avatar_url)
         choose_message = await context.send(embed=embed)
@@ -200,7 +202,7 @@ class Fun(commands.Cog, name="fun"):
             bot_choice_emote = random.choice(list(reactions.keys()))
             bot_choice_index = reactions[bot_choice_emote]
 
-            result_embed = discord.Embed(color=0x42F56C)
+            result_embed = discord.Embed(color=colors["green"])
             result_embed.set_author(
                 name=context.author.display_name, icon_url=context.author.avatar_url)
             await choose_message.clear_reactions()
@@ -209,25 +211,25 @@ class Fun(commands.Cog, name="fun"):
 
             if user_choice_index == bot_choice_index:
                 result_embed.description = f"**That's a draw!**\n{choices_message}"
-                result_embed.colour = 0xF59E42
+                result_embed.colour = colors["orange"]
             elif user_choice_index == 0 and bot_choice_index == 2:
                 result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = 0x42F56C
+                result_embed.colour = colors["green"]
             elif user_choice_index == 1 and bot_choice_index == 0:
                 result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = 0x42F56C
+                result_embed.colour = colors["green"]
             elif user_choice_index == 2 and bot_choice_index == 1:
                 result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = 0x42F56C
+                result_embed.colour = colors["green"]
             else:
                 result_embed.description = f"**I won!**\n{choices_message}"
-                result_embed.colour = 0xE02B2B
+                result_embed.colour = colors["red"]
                 await choose_message.add_reaction("🇱")
             await choose_message.edit(embed=result_embed)
         except asyncio.exceptions.TimeoutError:
             await choose_message.clear_reactions()
             timeout_embed = discord.Embed(
-                title="Too late slowpoke! I don't wanna play anymore!", color=0xE02B2B)
+                title="Too late slowpoke! I don't wanna play anymore!", color=colors["red"])
             timeout_embed.set_author(
                 name=context.author.display_name, icon_url=context.author.avatar_url)
             await choose_message.edit(embed=timeout_embed)
@@ -261,7 +263,7 @@ class Fun(commands.Cog, name="fun"):
         embed = discord.Embed(
             title="**My Answer:**",
             description=f"{answers[random.randint(0, len(answers))]}",
-            color=0x42F56C
+            color=colors["green"]
         )
         embed.set_footer(
             text=f"{context.message.author.name} asked: {question}"

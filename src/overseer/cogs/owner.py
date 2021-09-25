@@ -3,15 +3,16 @@
 import json
 import logging
 
-from helpers.config_helpers import load_bot_configs
+from helpers.config_helpers import load_bot_configs, load_colors
 
 import discord
 from discord.ext import commands
 
 from helpers import json_helpers
 
-# Bot and logger configs
+# Bot, color, and logger configs.
 config = load_bot_configs()
+colors = load_colors()
 logger = logging.getLogger()
 
 
@@ -37,7 +38,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title=f"There are currently {len(blacklist['ids'])} blacklisted IDs",
                 description=f"{', '.join(str(id) for id in blacklist['ids'])}",
-                color=0x000000
+                color=colors["black"]
             )
             await context.send(embed=embed)
 
@@ -61,7 +62,7 @@ class Owner(commands.Cog, name="owner"):
                 embed = discord.Embed(
                     title="User Already Blacklisted!",
                     description=f"**{member.name}** is already in the blacklist.",
-                    color=0xE02B2B
+                    color=colors["red"]
                 )
                 await context.send(embed=embed)
                 return
@@ -77,7 +78,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title="Error!",
                 description=f"Something went wrong when trying to add **{member.name}** to the blacklist: {str(e)}",
-                color=0xE02B2B
+                color=colors["red"]
             )
         else:
             with open("blacklist.json") as file:
@@ -86,7 +87,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title="User Blacklisted",
                 description=f"**{member.name}** has been successfully added to the blacklist",
-                color=0x42F56C
+                color=colors["green"]
             )
             embed.set_footer(
                 text=f"There are now {len(blacklist['ids'])} users in the blacklist"
@@ -116,7 +117,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title="User Not Blacklisted!",
                 description=f"**{member.name}** is not in the blacklist.",
-                color=0xE02B2B
+                color=colors["red"]
             )
         except Exception as e:
             logger.error(
@@ -128,7 +129,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title="Error!",
                 description=f"Something went wrong when trying to remove **{member.name}** from the blacklist: {str(e)}",
-                color=0xE02B2B
+                color=colors["red"]
             )
         else:
             with open("blacklist.json") as file:
@@ -137,7 +138,7 @@ class Owner(commands.Cog, name="owner"):
             embed = discord.Embed(
                 title="User Removed From Blacklist",
                 description=f"**{member.name}** has been successfully removed from the blacklist.",
-                color=0x42F56C
+                color=colors["green"]
             )
             embed.set_footer(
                 text=f"There are now {len(blacklist['ids'])} users in the blacklist."
@@ -158,7 +159,7 @@ class Owner(commands.Cog, name="owner"):
         logger.info("Shutting down the Overseer")
         embed = discord.Embed(
             description="Shutting down :wave:. We'll meet again.",
-            color=0x42F56C
+            color=colors["green"]
         )
         await context.send(embed=embed)
         await self.bot.close()
