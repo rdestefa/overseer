@@ -3,5 +3,6 @@ python 3.9+
 aiohttp
 asyncio
 discord.py
+icalendar
 pyyaml
 python-Levenshtein

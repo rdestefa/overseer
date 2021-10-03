@@ -32,7 +32,7 @@ class Owner(commands.Cog, name="owner"):
         Using this command without arguments will print the current blacklist.
         """
         if context.invoked_subcommand is None:
-            with open("blacklist.json") as file:
+            with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
             embed = discord.Embed(
@@ -53,7 +53,7 @@ class Owner(commands.Cog, name="owner"):
         Add a user to the Overseer's blacklist.
         """
         try:
-            with open("blacklist.json") as file:
+            with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
             # There shouldn't be duplicates in the blacklist.
@@ -81,7 +81,7 @@ class Owner(commands.Cog, name="owner"):
                 color=colors["red"]
             )
         else:
-            with open("blacklist.json") as file:
+            with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
             embed = discord.Embed(
@@ -132,7 +132,7 @@ class Owner(commands.Cog, name="owner"):
                 color=colors["red"]
             )
         else:
-            with open("blacklist.json") as file:
+            with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
             embed = discord.Embed(

@@ -37,6 +37,7 @@ bot = Bot(
 
 # ---------------------------- STARTUP EXECUTION ---------------------------- #
 
+
 if __name__ == "__main__":
     load_cogs(bot)
 
@@ -53,14 +54,6 @@ async def on_ready():
         platform.release(),
         os.name
     )
-
-"""Set up the game status task of the bot
-@tasks.loop(minutes=1.0)
-async def status_task():
-    statuses = ["with you!", "with someone!",
-                f"{config['bot_prefix']}help", "with humans!"]
-    await bot.change_presence(activity=discord.Game(random.choice(statuses)))
-"""
 
 
 # ----------------------------- EVENT HANDLERS ------------------------------ #

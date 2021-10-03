@@ -6,7 +6,6 @@ import logging
 import random
 
 from helpers.config_helpers import load_bot_configs, load_colors
-from helpers.json_helpers import increment_gintama_count, reset_gintama_count
 
 import aiohttp
 import discord
@@ -100,42 +99,6 @@ class Fun(commands.Cog, name="fun"):
         embed = discord.Embed(
             description=args,
             color=colors["green"]
-        )
-        await context.send(embed=embed)
-
-    @commands.group(
-        name="gintamacount",
-        usage="gintamacount",
-        brief="Keep track of Dec's Gintama references."
-    )
-    async def gintama_count(self, context):
-        """
-        Every time Declan mentions Gintama, keep track of it.
-        """
-        if context.invoked_subcommand is None:
-            count = increment_gintama_count()
-            count_str = f"{count} {'time' if count == 1 else 'times'}"
-            embed = discord.Embed(
-                title="Gintama Reference Counter",
-                description=f"Declan has mentioned Gintama {count_str} in consecutive conversations.",
-                color=colors["green"]
-            )
-            await context.send(embed=embed)
-
-    @gintama_count.command(
-        name="reset",
-        usage="reset",
-        brief="Resets Dec's Gintama reference counter."
-    )
-    async def gintama_count_clear(self, context):
-        """
-        If Declan hasn't mentioned Gintama during a conversation, reset his reference counter.
-        """
-        reset_gintama_count()
-        embed = discord.Embed(
-            title="No Gintama References Today",
-            description="Declan didn't mention Gintama today, so we'll reset his reference counter.",
-            color=colors["yellow"]
         )
         await context.send(embed=embed)
 
@@ -262,7 +225,7 @@ class Fun(commands.Cog, name="fun"):
                    'My sources say no.', 'Outlook not so good.', 'Very doubtful.']
         embed = discord.Embed(
             title="**My Answer:**",
-            description=f"{answers[random.randint(0, len(answers))]}",
+            description=f"{answers[random.randint(0, len(answers) - 1)]}",
             color=colors["green"]
         )
         embed.set_footer(
