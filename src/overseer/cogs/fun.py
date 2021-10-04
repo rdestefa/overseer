@@ -177,10 +177,40 @@ class Fun(commands.Cog, name="fun"):
         except asyncio.exceptions.TimeoutError:
             await choose_message.clear_reactions()
             timeout_embed = discord.Embed(
-                title="Too late slowpoke! I don't wanna play anymore!", color=colors["red"])
+                title="Too late slowpoke! I don't wanna play anymore!",
+                color=colors["red"]
+            )
             timeout_embed.set_author(
-                name=context.author.display_name, icon_url=context.author.avatar_url)
+                name=context.author.display_name,
+                icon_url=context.author.avatar_url
+            )
             await choose_message.edit(embed=timeout_embed)
+
+    @commands.command(
+        name="spam",
+        usage="spam <@user> <number>",
+        brief="Spam a user with DMs."
+    )
+    @commands.is_owner()
+    async def spam(self, context, member: discord.Member, amount: int):
+        """
+        The Overseer will spam a specified user's DMs `<number>` times.
+        """
+        if amount < 1:
+            logger.error(
+                "Only positive integers are accepted by spam.")
+            embed = discord.Embed(
+                title="Error!",
+                description=f"`{amount}` must be a positive integer.",
+                color=colors["red"]
+            )
+            await context.send(embed=embed)
+            return
+
+        for _ in range(amount):
+            message = " ".join([random.choice(
+                (":monkey:", ":monkey_face:", ":hippopotamus:", ":lion:", ":pig:")) for _ in range(10)])
+            await member.send(message)
 
     @commands.command(
         name="8ball",

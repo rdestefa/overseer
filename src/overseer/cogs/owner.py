@@ -35,8 +35,10 @@ class Owner(commands.Cog, name="owner"):
             with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
+            n_ids = len(blacklist["ids"])
             embed = discord.Embed(
-                title=f"There are currently {len(blacklist['ids'])} blacklisted IDs",
+                title=(f"There {'is' if n_ids == 1 else 'are'} currently " +
+                       f"{n_ids} blacklisted ID{'' if n_ids == 1 else 's'}"),
                 description=f"{', '.join(str(id) for id in blacklist['ids'])}",
                 color=colors["black"]
             )
@@ -61,10 +63,9 @@ class Owner(commands.Cog, name="owner"):
                 logger.warning("%s is already blacklisted", member.name)
                 embed = discord.Embed(
                     title="User Already Blacklisted!",
-                    description=f"**{member.name}** is already in the blacklist.",
+                    description=f"**{member.name}** is already blacklisted.",
                     color=colors["red"]
                 )
-                await context.send(embed=embed)
                 return
 
             json_helpers.add_user_to_blacklist(member.id)
@@ -77,20 +78,24 @@ class Owner(commands.Cog, name="owner"):
             )
             embed = discord.Embed(
                 title="Error!",
-                description=f"Something went wrong when trying to add **{member.name}** to the blacklist: {str(e)}",
+                description=("Something went wrong when trying to add " +
+                             f"**{member.name}** to the blacklist."),
                 color=colors["red"]
             )
         else:
             with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
+            n_ids = len(blacklist["ids"])
             embed = discord.Embed(
                 title="User Blacklisted",
-                description=f"**{member.name}** has been successfully added to the blacklist",
+                description=(f"**{member.name}** has been successfully " +
+                             "added to the blacklist."),
                 color=colors["green"]
             )
             embed.set_footer(
-                text=f"There are now {len(blacklist['ids'])} users in the blacklist"
+                text=(f"There {'is' if n_ids == 1 else 'are'} currently " +
+                      f"{n_ids} blacklisted user{'' if n_ids == 1 else 's'}")
             )
         finally:
             await context.send(embed=embed)
@@ -128,20 +133,24 @@ class Owner(commands.Cog, name="owner"):
             )
             embed = discord.Embed(
                 title="Error!",
-                description=f"Something went wrong when trying to remove **{member.name}** from the blacklist: {str(e)}",
+                description=("Something went wrong when trying to remove " +
+                             f"**{member.name}** from the blacklist."),
                 color=colors["red"]
             )
         else:
             with open("lists/blacklist.json") as file:
                 blacklist = json.load(file)
 
+            n_ids = len(blacklist["ids"])
             embed = discord.Embed(
                 title="User Removed From Blacklist",
-                description=f"**{member.name}** has been successfully removed from the blacklist.",
+                description=(f"**{member.name}** has been successfully " +
+                             "removed from the blacklist."),
                 color=colors["green"]
             )
             embed.set_footer(
-                text=f"There are now {len(blacklist['ids'])} users in the blacklist."
+                text=(f"There {'is' if n_ids == 1 else 'are'} currently " +
+                      f"{n_ids} blacklisted user{'' if n_ids == 1 else 's'}")
             )
         finally:
             await context.send(embed=embed)

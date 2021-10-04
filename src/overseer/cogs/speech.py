@@ -35,11 +35,11 @@ class Speech(commands.Cog, name="speech (`text` or `embed` mode)"):
         self._T = ('7', '+')
 
     @commands.command(
-        name="b-ify",
-        usage="b-ify <mode> <message>",
+        name="bify",
+        usage="bify <mode> <message>",
         brief="B-ify each word in a message."
     )
-    async def b_ify(self, context, mode: str, *, args):
+    async def bify(self, context, mode: str, *, args):
         """
         The Overseer will b-ify each word in your message.
         """
@@ -47,9 +47,9 @@ class Speech(commands.Cog, name="speech (`text` or `embed` mode)"):
 
         for word in args.strip().split():
             if word[0] in self.vowels:
-                message += ":b:" + word + " "
+                message += f":b:{word} "
             else:
-                message += ":b:" + word[1:] + " "
+                message += f":b:{word[1:]} "
 
         await context.invoke(
             self.bot.get_command('say'), mode=mode, args=message)

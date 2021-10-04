@@ -21,7 +21,7 @@ def load_bot_configs(
         sys.exit(f"'{config_path}' not found! Please add it and try again.")
     else:
         with open(config_path) as file:
-            config = yaml.load(file, Loader=yaml.FullLoader)
+            config = yaml.safe_load(file)
 
     return config
 
@@ -37,7 +37,7 @@ def load_logger(
         logging.warning(f"'{config_path}' not found! Using default logger.")
     else:
         with open(config_path) as file:
-            logging.config.dictConfig(yaml.load(file, Loader=yaml.FullLoader))
+            logging.config.dictConfig(yaml.safe_load(file))
 
     logger = logging.getLogger()
     return logger
@@ -66,7 +66,7 @@ def load_colors(
         logging.warning(f"'{config_path}' not found! Using default colors.")
     else:
         with open(config_path) as file:
-            colors = yaml.load(file, Loader=yaml.FullLoader)
+            colors = yaml.safe_load(file)
 
     return colors
 
