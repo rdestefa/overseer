@@ -1,4 +1,4 @@
-# overseer.cogs.general
+# overseer.cogs.info
 
 import logging
 import platform
@@ -14,7 +14,7 @@ colors = load_colors()
 logger = logging.getLogger()
 
 
-class General(commands.Cog, name="general"):
+class Info(commands.Cog, name="info"):
     def __init__(self, bot):
         self.bot = bot
 
@@ -151,4 +151,4 @@ class General(commands.Cog, name="general"):
 
 
 def setup(bot):
-    bot.add_cog(General(bot))
+    bot.add_cog(Info(bot))

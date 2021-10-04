@@ -16,7 +16,7 @@ def handle_command_not_found(
     invalidCommand = str(error).split('"')[1]
 
     # Calculate Levenshtein distance from valid commands for recommendation.
-    cmds = list(bot.walk_commands())
+    cmds = [cmd for cmd in bot.walk_commands() if not cmd.hidden]
     lev_dists = [lev.distance(invalidCommand, str(cmd))
                  / max(len(invalidCommand), len(str(cmd))) for cmd in cmds]
     lev_min = min(lev_dists)

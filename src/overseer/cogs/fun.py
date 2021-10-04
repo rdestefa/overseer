@@ -88,21 +88,6 @@ class Fun(commands.Cog, name="fun"):
                     self.dailyfact.reset_cooldown(context)
 
     @commands.command(
-        name="embed",
-        usage="embed <message>",
-        brief="The Overseer embeds what you're thinking."
-    )
-    async def embed(self, context, *, args):
-        """
-        The Overseer will say what you're thinking, but within embeds.
-        """
-        embed = discord.Embed(
-            description=args,
-            color=colors["green"]
-        )
-        await context.send(embed=embed)
-
-    @commands.command(
         name="poll",
         usage="poll <title>",
         brief="Create a poll that members can vote on."
@@ -196,18 +181,6 @@ class Fun(commands.Cog, name="fun"):
             timeout_embed.set_author(
                 name=context.author.display_name, icon_url=context.author.avatar_url)
             await choose_message.edit(embed=timeout_embed)
-
-    @commands.command(
-        name="say",
-        aliases=["echo"],
-        usage="say <message>",
-        brief="The Overseer says what you're thinking."
-    )
-    async def say(self, context, *, args):
-        """
-        The Overseer will say what you're thinking so you don't have to.
-        """
-        await context.send(args)
 
     @commands.command(
         name="8ball",

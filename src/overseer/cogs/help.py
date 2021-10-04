@@ -33,8 +33,8 @@ class Help(commands.Cog, name="help"):
                 config['bot_prefix']) else command
 
             # Search for matching command.
-            if (cmd := self.bot.get_command(command)) is not None:
-                title = (f"{cmd.name.capitalize()} (Usage: `{config['bot_prefix']}{cmd.usage}`)" if not cmd.parents
+            if (cmd := self.bot.get_command(command)) is not None and not cmd.hidden:
+                title = (f"{cmd.name.replace('_', ' ').title()} (Usage: `{config['bot_prefix']}{cmd.usage}`)" if not cmd.parents
                          else f"{cmd.qualified_name.title()} (Usage: `{config['bot_prefix']}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
                 embed = discord.Embed(
                     title=title,
@@ -58,7 +58,7 @@ class Help(commands.Cog, name="help"):
         for cog_name in self.bot.cogs:
             cog = self.bot.get_cog(cog_name.lower())
             cmd_attrs = [(cmd.usage, cmd.brief, cmd.parents)
-                         for cmd in cog.walk_commands()]
+                         for cmd in cog.walk_commands() if not cmd.hidden]
 
             help_text = "\n".join(
                 f"{prefix}{usage} - {brief}" if not parents
