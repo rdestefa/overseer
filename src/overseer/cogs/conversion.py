@@ -16,6 +16,8 @@ config = load_bot_configs()
 colors = load_colors()
 logger = logging.getLogger()
 
+# TODO: Put conversions in YAML config file.
+
 
 class Conversion(commands.Cog, name="conversion"):
     """
@@ -45,6 +47,7 @@ class Conversion(commands.Cog, name="conversion"):
             }
         }
 
+    # TODO: Restrucuture options to support FLV.
     async def convert_files(
         self,
         temp_dir: str,
@@ -175,16 +178,17 @@ class Conversion(commands.Cog, name="conversion"):
                 color=colors[color]
             )
             if converted == unsupported:
-                await message.channel.send(
-                    content=message.content,
-                    embed=embed,
-                    files=supported_files + converted_files
-                )
                 try:
                     await message.delete()
                 except discord.Forbidden:
                     await message.channel.send(
                         embed=embed, files=converted_files)
+                else:
+                    await message.channel.send(
+                        content=message.content,
+                        embed=embed,
+                        files=supported_files + converted_files
+                    )
             else:
                 await message.channel.send(embed=embed, files=converted_files)
 
