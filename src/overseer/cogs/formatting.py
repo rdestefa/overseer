@@ -1,4 +1,4 @@
-# overseer.cogs.speech
+# overseer.cogs.formatting
 
 import logging
 import random
@@ -14,7 +14,7 @@ colors = load_colors()
 logger = logging.getLogger()
 
 
-class Speech(commands.Cog, name="speech (`text` or `embed` mode)"):
+class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
     """
     Overseer commands for formatting and outputting text.
     """
@@ -118,4 +118,4 @@ class Speech(commands.Cog, name="speech (`text` or `embed` mode)"):
 
 
 def setup(bot):
-    bot.add_cog(Speech(bot))
+    bot.add_cog(Formatting(bot))

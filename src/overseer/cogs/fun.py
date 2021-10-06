@@ -46,10 +46,10 @@ class Fun(commands.Cog, name="fun"):
 
     """
     Why 1 and 86400?
-    -> Because the user should be able to use the command *once* every *86400* seconds.
+    -> The user should be able to use the command *once* every *86400* seconds.
 
     Why BucketType.user?
-    -> Because the cooldown only affects the current user. Other kinds of cooldowns:
+    -> The cooldown only affects the current user. Other kinds of cooldowns:
       - BucketType.default for a global basis.
       - BucketType.user for a per-user basis.
       - BucketType.server for a per-server basis.

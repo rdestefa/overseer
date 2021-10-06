@@ -1,4 +1,4 @@
-# overseer.helpers.configs_helpers
+# overseer.helpers.config_helpers
 
 import logging
 import logging.config

@@ -49,4 +49,4 @@ def load_cog(bot: Bot, extension: str, cog_name: str) -> None:
             exception
         )
     else:
-        logger.debug("Loaded extension %s", cog_name)
+        logger.info("Loaded extension %s", cog_name)

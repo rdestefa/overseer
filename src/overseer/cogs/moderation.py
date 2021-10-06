@@ -145,20 +145,20 @@ class Moderation(commands.Cog, name="moderation"):
     async def purge(self, context, amount: int = 10):
         """
         Delete a number of messages in the channel. Defaults to 10 messages.
-        If -1 is specified, then every message in the channel will be deleted.
+        A maximum of 100 messages can be deleted at a time.
         """
-        if amount < 1 and amount != -1:
+        if amount < 1:
             logger.error(
-                "Only positive integers or -1 are accepted by purge.")
+                "Only positive integers are accepted by purge.")
             embed = discord.Embed(
                 title="Error!",
-                description=f"`{amount}` must be a positive integer or -1.",
+                description=f"`{amount}` must be a positive integer.",
                 color=colors["red"]
             )
             await context.send(embed=embed)
             return
 
-        limit = amount if amount > 0 else None
+        limit = amount if amount <= 100 else 100
         purged_messages = await context.message.channel.purge(limit=limit)
         embed = discord.Embed(
             title="Chat Cleared!",

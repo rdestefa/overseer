@@ -2,13 +2,14 @@
 
 # This is the main execution file for the Overseer Discord bot.
 
+from glom import glom
 import json
 import os
 import platform
 
 from cogs import load_cogs
 from helpers.config_helpers import load_all_configs
-from helpers.error_helpers import handle_error
+from helpers.error_helpers import MemberBlacklisted, handle_error
 
 import discord
 from discord.ext.commands import Bot
@@ -56,20 +57,33 @@ async def on_ready():
     )
 
 
+# ------------------------------ GLOBAL CHECKS ------------------------------ #
+
+
+# Ignore commands issued by a blacklisted user.
+@bot.check
+async def not_blacklisted(context):
+    with open("lists/blacklist.json", "r") as file:
+        blacklist = json.load(file)
+
+    user_id = glom(context, 'message.author.id', default=None)
+    if user_id is not None and user_id in blacklist["ids"]:
+        raise MemberBlacklisted(context.message.author)
+
+    return True
+
+
 # ----------------------------- EVENT HANDLERS ------------------------------ #
 
 
 # Executes every time someone sends a message, with or without the prefix.
 @bot.event
 async def on_message(message):
-    # Ignores if a command is being executed by the Overseer or another bot.
+    # Ignore commands being executed by the Overseer or another bot.
     if message.author == bot.user or message.author.bot:
         return
-    # Ignores if a command is being executed by a blacklisted user.
-    with open("lists/blacklist.json") as file:
-        blacklist = json.load(file)
-    if message.author.id in blacklist["ids"]:
-        return
+
+    # Process any commmands if they were issued.
     await bot.process_commands(message)
 
 

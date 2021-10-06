@@ -7,6 +7,32 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 
 
+# ---------------------------- CUSTOM EXCEPTIONS ---------------------------- #
+
+
+class MemberBlacklisted(commands.CheckFailure):
+    """
+    Custom exception to be thrown when a blacklisted user tries to issue
+    a command to the Overseer.
+    """
+
+    def __init__(
+        self,
+        member: discord.Member,
+        message: str = "The Overseer ignores blacklisted users"
+    ):
+        self.member = member
+        self.message = message
+
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.member.name} is blacklisted. {self.message}"
+
+
+# ----------------------------- ERROR HANDLERS ------------------------------ #
+
+
 def handle_command_not_found(
     bot: Bot,
     error: commands.CommandNotFound,
@@ -54,7 +80,17 @@ def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:
     invalid_member = str(error).split('"')[1]
     embed = discord.Embed(
         title="Member Not Found!",
-        description=f"I looked everywhere, but I couldn't find `{invalid_member}` in the server."
+        description=f"I looked everywhere, but I couldn't find **{invalid_member}** in the server."
+    )
+
+    return embed
+
+
+def handle_member_blacklisted(error: MemberBlacklisted) -> discord.Embed:
+    embed = discord.Embed(
+        title="You're Blacklisted!",
+        description=(f"You're on my blacklist, **{error.member.name}**.\n" +
+                     "Try behaving yourself and maybe then we can talk.")
     )
 
     return embed
@@ -63,7 +99,7 @@ def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:
 def handle_not_owner(failed_command: str, prefix: str) -> discord.Embed:
     embed = discord.Embed(
         title="Not an Owner!",
-        description=f"Only the Overseer's owners can execute `{prefix}{failed_command}`."
+        description=f"Only my owners owners can execute `{prefix}{failed_command}`."
     )
 
     return embed
@@ -132,6 +168,8 @@ def handle_error(
         embed = handle_command_on_cooldown(error)
     elif isinstance(error, commands.MemberNotFound):
         embed = handle_member_not_found(error)
+    elif isinstance(error, MemberBlacklisted):
+        embed = handle_member_blacklisted(error)
     elif isinstance(error, commands.NotOwner):
         embed = handle_not_owner(failed_command, prefix)
     elif isinstance(error, commands.MissingPermissions):
