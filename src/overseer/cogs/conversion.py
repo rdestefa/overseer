@@ -93,22 +93,42 @@ class Conversion(commands.Cog, name="conversion"):
         Proper conversion from video to GIF requires three separate ffmpeg
         subprocesses, so the conversion requires this special helper function.
         """
-        # Create pseudo-random input and output file names.
+        # Create pseudo-random input, palette, and output file names.
         input = os.path.join(temp_dir, f"{uuid.uuid4()}.{from_type}")
+        palette = os.path.join(temp_dir, f"{uuid.uuid4()}.png")
+        output = os.path.join(temp_dir, f"{uuid.uuid4()}.{to_type}")
 
         # Download file from Discord.
         await attachment.save(fp=input)
 
         # Extract the frame rate of the input video.
-        ffmpeg_output = subprocess.check_output([
+        ffmpeg_output = subprocess.call([
             "ffprobe", input,
             "-v", "0",                                # First video.
-            "-of", "csv=p=0",                         # Truncate all noise.
+            "-of", "csv=p=0",                         # Remove extra text.
             "-select-streams", "v",                   # Video input.
             "-show_entries", "stream=avg_frame_rate"  # Avg framerate as frac.
         ])
         top, bottom = ffmpeg_output.decode("utf-8").strip().split("/")
-        framerate = round(int(top) / int(bottom), 2)
+        framerate = round(int(top) / int(bottom), 2)\
+
+        palette_result = subprocess.call([
+            "ffmpeg", "-i", input,
+            "-vf", f"fps={framerate},scale=512:-1:fkags=lanczos,palettegen",
+            "-y", palette
+        ])
+
+        if palette_result:
+            # TODO: Error handler
+            pass
+
+        result = subprocess.call([
+            "ffmpeg", "-i", input, "-i", palette,
+            "-lavfi", f'"fps={framerate},scale=512:-1:flags=lanczos [x]; [x][1:v] paletteuse"',
+            "-y", output
+        ])
+
+        return output, result
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -266,13 +286,21 @@ class Conversion(commands.Cog, name="conversion"):
         if ((from_type, to_type) in self.configs["valid_conversions"] or
                 (to_type, from_type) in self.configs["valid_conversions"]):
             async with asynctempfile.TemporaryDirectory() as temp:
-                output, result = await self.convert_files(
-                    temp,
-                    from_type,
-                    to_type,
-                    context.message.attachments[0],
-                    self.configs["valid_conversions"][(from_type, to_type)]
-                )
+                if to_type == 'gif':
+                    output, result = await self.convert_to_gif(
+                        temp,
+                        from_type,
+                        to_type,
+                        context.message.attachments[0]
+                    )
+                else:
+                    output, result = await self.convert_files(
+                        temp,
+                        from_type,
+                        to_type,
+                        context.message.attachments[0],
+                        self.configs["valid_conversions"][(from_type, to_type)]
+                    )
 
                 # Explicitly check for 0 in case `result` is `None`.
                 if result == 0:
