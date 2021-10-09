@@ -15,13 +15,19 @@ from discord.ext import commands
 colors = load_config("colors")
 logger = logging.getLogger()
 
-# TODO: Put conversions in YAML config file.
-
 
 class Conversion(commands.Cog, name="conversion"):
     """
     Cog for converting files from one type to another, both automatically
     and on command.
+
+    There exists a Python abstraction for using ffmpeg, linked below:
+
+      - https://kkroening.github.io/ffmpeg-python/#
+
+    This library is not very robust, however, and its async execution will
+    deadlock if the `quiet` option (suppress output) is set to True. Due to
+    these limitations, this cog calls ffmpeg directly through `subprocess`.
     """
 
     def __init__(self, bot):
@@ -41,8 +47,11 @@ class Conversion(commands.Cog, name="conversion"):
         from_type: str,
         to_type: str,
         attachment: discord.Attachment,
-        special_args: list[str] = []
+        args: list[list[str]] = [[], []]
     ) -> tuple[str, int]:
+        """
+        Helper function to convert files from one type to another.
+        """
         # Create pseudo-random input and output file names.
         input = os.path.join(temp_dir, f"{uuid.uuid4()}.{from_type}")
         output = os.path.join(temp_dir, f"{uuid.uuid4()}.{to_type}")
@@ -51,15 +60,19 @@ class Conversion(commands.Cog, name="conversion"):
         await attachment.save(fp=input)
 
         """
-        Breakdown of options passed into ffmpeg:
+        Summary of common options passed into ffmpeg:
 
           -i <input_path>: Path to file being converted.
-          -vcodec copy: Copy or add playback metadata to the file.
-          -acodec copy: Copy or add audio metadata to the file.
+          -<codec:v>|<-c:v> copy: Copy or add playback metadata to the file.
+          -<codec:a>|<-c:a> copy: Copy or add audio metadata to the file.
+          -frames:v <n>: Take only the first `n` frames of a video.
+          -vf format=<format>: Pixel format for the image / video.
           -y <output_path>: Path for output file (overwrite existing file).
         """
-        args = (["ffmpeg", "-i", input, "-vcodec", "copy", "-acodec", "copy"]
-                + special_args
+        args = (["ffmpeg"]
+                + args[0]
+                + ["-i", input]
+                + args[1]
                 + ["-y", output])
         result = subprocess.call(
             args,
@@ -69,20 +82,40 @@ class Conversion(commands.Cog, name="conversion"):
 
         return output, result
 
+    async def convert_to_gif(
+        self,
+        temp_dir: str,
+        from_type: str,
+        to_type: str,
+        attachment: discord.Attachment
+    ):
+        """
+        Proper conversion from video to GIF requires three separate ffmpeg
+        subprocesses, so the conversion requires this special helper function.
+        """
+        # Create pseudo-random input and output file names.
+        input = os.path.join(temp_dir, f"{uuid.uuid4()}.{from_type}")
+
+        # Download file from Discord.
+        await attachment.save(fp=input)
+
+        # Extract the frame rate of the input video.
+        ffmpeg_output = subprocess.check_output([
+            "ffprobe", input,
+            "-v", "0",                                # First video.
+            "-of", "csv=p=0",                         # Truncate all noise.
+            "-select-streams", "v",                   # Video input.
+            "-show_entries", "stream=avg_frame_rate"  # Avg framerate as frac.
+        ])
+        top, bottom = ffmpeg_output.decode("utf-8").strip().split("/")
+        framerate = round(int(top) / int(bottom), 2)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
         Discord (as of late 2021) doesn't support embedded mov, avi, or flv
         files. To save the user the hassle of downloading throw away files,
         convert them to a format with supported embedding and re-upload them.
-
-        There exists a Python abstraction for using ffmpeg, linked below:
-
-          - https://kkroening.github.io/ffmpeg-python/#
-
-        This library is not very robust, however, and its async execution will
-        deadlock if the `quiet` option (suppress output) is set to True. Due to
-        these limitations, this cog calls ffmpeg directly through `subprocess`.
         """
         # Ignore all commands and messages from the Overseer or another bot.
         if (message.author == self.bot.user or message.author.bot or
@@ -91,8 +124,11 @@ class Conversion(commands.Cog, name="conversion"):
 
         for attachment in message.attachments:
             # If any of the files aren't supported, convert them.
-            if (attachment.filename.rpartition(".")[2].lower()
-                    in self.configs["unsupported_embeds"]):
+            filetype = attachment.filename.rpartition(".")[2]
+            filetype = self.configs["aliases"].get(
+                filetype.lower(), filetype.lower())
+
+            if (filetype in self.configs["unsupported_embeds"]):
                 break
         else:
             # No point in converting files if they're all supported.
@@ -104,14 +140,17 @@ class Conversion(commands.Cog, name="conversion"):
 
             for attachment in message.attachments:
                 filename, _, filetype = attachment.filename.rpartition(".")
+                filetype = self.configs["aliases"].get(
+                    filetype.lower(), filetype.lower())
 
                 # Convert all unsupported files.
-                if filetype.lower() in self.configs["unsupported_embeds"]:
+                if (filetype in self.configs["unsupported_embeds"]):
                     output, result = await self.convert_files(
                         temp,
                         filetype,
                         "mp4",
-                        attachment
+                        attachment,
+                        self.configs["valid_conversions"][(filetype, "mp4")]
                     )
 
                     # Explicitly check for 0 in case `result` is `None`.
@@ -191,10 +230,10 @@ class Conversion(commands.Cog, name="conversion"):
     # TODO: Convert GIFs.
     @commands.command(
         name="convert",
-        usage="convert <extension>",
+        usage="convert <to_type>",
         brief="Convert a file to a different type."
     )
-    async def convert(self, context, extension: str):
+    async def convert(self, context, to_type: str):
         """
         The Overseer will convert a file you upload to a different type.
         """
@@ -206,26 +245,33 @@ class Conversion(commands.Cog, name="conversion"):
             ))
             return
 
-        filename, _, filetype = (context.message.attachments[0].filename
-                                 .rpartition("."))
+        filename, _, from_type = (context.message.attachments[0].filename
+                                  .rpartition("."))
 
-        if (filetype := filetype.lower()) == (extension := extension.lower()):
+        # Convert any aliased file types.
+        to_type = self.configs["aliases"].get(to_type.lower(), to_type.lower())
+        from_type = self.configs["aliases"].get(
+            from_type.lower(), from_type.lower())
+
+        # Don't convert the same file types.
+        if from_type == to_type:
             await context.send(embed=discord.Embed(
                 title="Same Extension!",
                 description=("Why would I convert a file that's already a "
-                             + "`{extension}`?"),
+                             + f"`{to_type}`?"),
                 color=colors["red"]
             ))
             return
 
-        if ((filetype, extension) in self.configs["valid_conversions"] or
-                (extension, filetype) in self.configs["valid_conversions"]):
+        if ((from_type, to_type) in self.configs["valid_conversions"] or
+                (to_type, from_type) in self.configs["valid_conversions"]):
             async with asynctempfile.TemporaryDirectory() as temp:
                 output, result = await self.convert_files(
                     temp,
-                    filetype,
-                    extension,
-                    context.message.attachments[0]
+                    from_type,
+                    to_type,
+                    context.message.attachments[0],
+                    self.configs["valid_conversions"][(from_type, to_type)]
                 )
 
                 # Explicitly check for 0 in case `result` is `None`.
@@ -233,44 +279,45 @@ class Conversion(commands.Cog, name="conversion"):
                     await context.send(
                         embed=discord.Embed(
                             title="File Converted",
-                            description=(f"Here's your `{extension}` file. " +
+                            description=(f"Here's your `{to_type}` file. " +
                                          "Tips are appreciated, but not " +
                                          "required."),
                             color=colors["green"]
                         ),
                         file=discord.File(
                             output,
-                            filename=f"{filename}.{extension}"
+                            filename=f"{filename}.{to_type}"
                         )
                     )
                     logger.info(
                         "Converted %s.%s sent by %s (ID: %s) to %s.%s",
                         filename,
-                        filetype,
+                        from_type,
                         context.message.author,
                         context.message.author.id,
                         filename,
-                        extension
+                        to_type
                     )
                 else:
                     await context.send(embed=discord.Embed(
                         title="Failed to Convert File!",
                         description=(f"Hmm, I can't seem to convert this file "
-                                     + f"to a `{extension}`...maybe I'm not "
-                                     + "cut out for this line of work :("),
+                                     + f"to a `{to_type}`...maybe I'm not cut "
+                                     + "out for this line of work "
+                                     + ":face_exhaling:"),
                         color=colors["red"]
                     ))
                     logger.error(
                         "Failed to convert %s.%s sent by %s (ID: %s)",
                         filename,
-                        filetype,
+                        from_type,
                         context.message.author,
                         context.message.author.id
                     )
         else:
             await context.send(embed=discord.Embed(
                 title="Invalid Conversion!",
-                description=f"I can't convert `{filetype}` to `{extension}`.",
+                description=f"I can't convert `{from_type}` to `{to_type}`.",
                 color=colors["red"]
             ))
 
