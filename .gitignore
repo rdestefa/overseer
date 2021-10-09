@@ -2,12 +2,9 @@
 .env
 
 # Config files
-bot_config.yaml
-logging_config.yaml
-color_config.yaml
+*.yaml
 blacklist.json
 overseer-info.txt
-gintama_counter.txt
 
 # Log files
 *.log

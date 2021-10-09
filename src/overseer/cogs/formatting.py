@@ -3,14 +3,13 @@
 import logging
 import random
 
-from helpers.config_helpers import load_bot_configs, load_colors
+from helpers.config_helpers import load_config
 
 import discord
 from discord.ext import commands
 
-# Bot, color, and logger configs.
-config = load_bot_configs()
-colors = load_colors()
+# Color, and logger configs.
+colors = load_config("colors")
 logger = logging.getLogger()
 
 

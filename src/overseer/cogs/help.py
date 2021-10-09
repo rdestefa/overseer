@@ -2,14 +2,13 @@
 
 import logging
 
-from helpers.config_helpers import load_bot_configs, load_colors
+from helpers.config_helpers import load_config
 
 import discord
 from discord.ext import commands
 
-# Bot, color, and logger configs.
-config = load_bot_configs()
-colors = load_colors()
+# Color, and logger configs.
+colors = load_config("colors")
 logger = logging.getLogger()
 
 
@@ -30,12 +29,12 @@ class Help(commands.Cog, name="help"):
         if command is not None:
             # Trim prefix from command.
             command = command[1:] if command.startswith(
-                config['bot_prefix']) else command
+                self.bot.command_prefix) else command
 
             # Search for matching command.
             if (cmd := self.bot.get_command(command)) is not None and not cmd.hidden:
-                title = (f"{cmd.name.replace('_', ' ').title()} (Usage: `{config['bot_prefix']}{cmd.usage}`)" if not cmd.parents
-                         else f"{cmd.qualified_name.title()} (Usage: `{config['bot_prefix']}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
+                title = (f"{cmd.name.replace('_', ' ').title()} (Usage: `{self.bot.command_prefix}{cmd.usage}`)" if not cmd.parents
+                         else f"{cmd.qualified_name.title()} (Usage: `{self.bot.command_prefix}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
                 embed = discord.Embed(
                     title=title,
                     description=f"{cmd.help}",
@@ -47,7 +46,7 @@ class Help(commands.Cog, name="help"):
             # Command not found.
             raise commands.CommandNotFound(f'Command "{command}" is not found')
 
-        prefix = config["bot_prefix"]
+        prefix = self.bot.command_prefix
         if not isinstance(prefix, str):
             prefix = prefix[0]
         embed = discord.Embed(

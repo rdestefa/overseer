@@ -6,14 +6,13 @@ import os
 import subprocess
 import uuid
 
-from helpers.config_helpers import load_bot_configs, load_colors
+from helpers.config_helpers import load_config
 
 import discord
 from discord.ext import commands
 
-# Bot, color, and logger configs.
-config = load_bot_configs()
-colors = load_colors()
+# Color, and logger configs.
+colors = load_config("colors")
 logger = logging.getLogger()
 
 # TODO: Put conversions in YAML config file.
@@ -27,20 +26,8 @@ class Conversion(commands.Cog, name="conversion"):
 
     def __init__(self, bot):
         self.bot = bot
-        self.unsupported_embeds = {"mov", "avi", "flv"}
+        self.configs = load_config("conversion", safe=False)
         # M4V and GIF need special options.
-        self.valid_conversions = {
-            ("mp4", "mov"),
-            ("mp4", "avi"),
-            ("mp4", "flv"),
-            ("mp4", "m4v"),
-            ("mov", "avi"),
-            ("mov", 'flv'),
-            ("mov", "m4v"),
-            ("avi", "flv"),
-            ("avi", "m4v"),
-            ("flv", "m4v")
-        }
         self.special_conversions = {
             "gif": {
                 "to": ["-pix_fmt", "yuv420p"]
@@ -99,13 +86,13 @@ class Conversion(commands.Cog, name="conversion"):
         """
         # Ignore all commands and messages from the Overseer or another bot.
         if (message.author == self.bot.user or message.author.bot or
-                message.content.startswith(config["bot_prefix"])):
+                message.content.startswith(self.bot.command_prefix)):
             return
 
         for attachment in message.attachments:
             # If any of the files aren't supported, convert them.
             if (attachment.filename.rpartition(".")[2].lower()
-                    in self.unsupported_embeds):
+                    in self.configs["unsupported_embeds"]):
                 break
         else:
             # No point in converting files if they're all supported.
@@ -119,7 +106,7 @@ class Conversion(commands.Cog, name="conversion"):
                 filename, _, filetype = attachment.filename.rpartition(".")
 
                 # Convert all unsupported files.
-                if filetype.lower() in self.unsupported_embeds:
+                if filetype.lower() in self.configs["unsupported_embeds"]:
                     output, result = await self.convert_files(
                         temp,
                         filetype,
@@ -231,8 +218,8 @@ class Conversion(commands.Cog, name="conversion"):
             ))
             return
 
-        if ((filetype, extension) in self.valid_conversions or
-                (extension, filetype) in self.valid_conversions):
+        if ((filetype, extension) in self.configs["valid_conversions"] or
+                (extension, filetype) in self.configs["valid_conversions"]):
             async with asynctempfile.TemporaryDirectory() as temp:
                 output, result = await self.convert_files(
                     temp,
@@ -246,7 +233,9 @@ class Conversion(commands.Cog, name="conversion"):
                     await context.send(
                         embed=discord.Embed(
                             title="File Converted",
-                            description=f"Here's your `{extension}` file.",
+                            description=(f"Here's your `{extension}` file. " +
+                                         "Tips are appreciated, but not " +
+                                         "required."),
                             color=colors["green"]
                         ),
                         file=discord.File(

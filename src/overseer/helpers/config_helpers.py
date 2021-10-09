@@ -7,78 +7,49 @@ import sys
 from typing import Any
 import yaml
 
-import discord
-
 
 def load_bot_configs(
-    config_dir: str = "configs",
-    config_path: str = "bot_config.yaml"
-) -> dict[str, Any]:
-    config_dir = config_dir or os.path.dirname(__file__)
-    config_path = f"{config_dir}/{config_path}"
+    config_dir: str = None
+) -> tuple[dict[str, Any], logging.Logger]:
+    config_dir = os.path.expanduser(config_dir or "~/overseer/.config")
+    bot_config_path = os.path.join(config_dir, "overseer.yaml")
+    logger_config_path = os.path.join(config_dir, "logging.yaml")
 
-    if not os.path.isfile(config_path):
-        sys.exit(f"'{config_path}' not found! Please add it and try again.")
-    else:
-        with open(config_path) as file:
+    # Load Overseer configs.
+    if os.path.isfile(bot_config_path):
+        with open(bot_config_path) as file:
             config = yaml.safe_load(file)
-
-    return config
-
-
-def load_logger(
-    config_dir: str = "configs",
-    config_path: str = "logging_config.yaml"
-) -> logging.Logger:
-    config_dir = config_dir or os.path.dirname(__file__)
-    config_path = f"{config_dir}/{config_path}"
-
-    if not os.path.isfile(config_path):
-        logging.warning(f"'{config_path}' not found! Using default logger.")
     else:
-        with open(config_path) as file:
+        sys.exit(f"'{bot_config_path}' not found!")
+
+    # Initialize Overseer logger.
+    if os.path.isfile(logger_config_path):
+        with open(logger_config_path) as file:
             logging.config.dictConfig(yaml.safe_load(file))
+    else:
+        logging.warning(f"'{logger_config_path}' not found! Using default.")
 
     logger = logging.getLogger()
-    return logger
+    return config, logger
 
 
-def load_colors(
-    config_dir: str = "configs",
-    config_path: str = "color_config.yaml"
-) -> dict[str, int]:
-    config_dir = config_dir or os.path.dirname(__file__)
-    config_path = f"{config_dir}/{config_path}"
+def load_config(
+    filename: str,
+    safe: bool = True,
+    default: dict[Any, Any] | list[Any] = {},
+    config_dir: str = None
+) -> dict[Any, Any] | list[Any]:
+    config_dir = os.path.expanduser(config_dir or "~/overseer/.config")
+    config_path = os.path.join(config_dir, filename + '.yaml')
 
-    colors = {
-        "red": discord.Color.red(),
-        "blue": discord.Color.blue(),
-        "yellow": discord.Color.gold(),
-        "orange": discord.Color.orange(),
-        "green": discord.Color.green(),
-        "purple": discord.Color.purple(),
-        "gray": discord.Color.darker_grey(),
-        "black": 0x000000,
-        "white": 0xFFFFFF
-    }
-
-    if not os.path.isfile(config_path):
-        logging.warning(f"'{config_path}' not found! Using default colors.")
-    else:
+    if os.path.isfile(config_path):
         with open(config_path) as file:
-            colors = yaml.safe_load(file)
+            if safe:
+                config = yaml.safe_load(file)
+            else:
+                config = yaml.full_load(file)
+    else:
+        logging.warning(f"'{config_path}' not found! Using default values.")
+        config = default
 
-    return colors
-
-
-def load_all_configs(
-    config_dir: str = "configs",
-    bot_config_path: str = "bot_config.yaml",
-    logger_config_path: str = "logging_config.yaml",
-    color_config_path: str = "color_config.yaml"
-) -> tuple[dict[str, Any], logging.Logger, discord.Intents]:
-    bot_configs = load_bot_configs(config_dir, bot_config_path)
-    logger = load_logger(config_dir, logger_config_path)
-    colors = load_colors(config_dir, color_config_path)
-
-    return bot_configs, logger, colors
+    return config

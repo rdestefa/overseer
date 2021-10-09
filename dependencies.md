@@ -2,7 +2,7 @@
 
 ## Python Version
 
-- [Python 3.9+](https://www.python.org/) is required to run the Overseer.
+- [Python 3.10+](https://www.python.org/) is required to run the Overseer.
 
 ## Packages (Non-Standard Library)
 

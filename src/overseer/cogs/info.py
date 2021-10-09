@@ -3,14 +3,13 @@
 import logging
 import platform
 
-from helpers.config_helpers import load_bot_configs, load_colors
+from helpers.config_helpers import load_config
 
 import discord
 from discord.ext import commands
 
-# Bot, color, and logger configs.
-config = load_bot_configs()
-colors = load_colors()
+# Color, and logger configs.
+colors = load_config("colors")
 logger = logging.getLogger()
 
 
@@ -47,7 +46,7 @@ class Info(commands.Cog, name="info"):
         )
         embed.add_field(
             name="Command Prefix",
-            value=f"{config['bot_prefix']}",
+            value=f"{self.bot.command_prefix}",
             inline=True
         )
         embed.set_footer(
@@ -64,8 +63,9 @@ class Info(commands.Cog, name="info"):
         """
         Get the Overseer's invite link to share with other servers.
         """
+        # TODO: Fix to enable custom attribute fetching from bot configs.
         embed = discord.Embed(
-            description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={config['application_id']}&scope=bot&permissions=470150263).",
+            description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={'885745752893186068'}&scope=bot&permissions=470150263).",
             color=colors["purple"]
         )
 

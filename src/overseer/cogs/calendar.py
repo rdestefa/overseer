@@ -6,14 +6,13 @@ import logging
 import os
 import re
 
-from helpers.config_helpers import load_bot_configs, load_colors
+from helpers.config_helpers import load_config
 
 import discord
 from discord.ext import commands, tasks
 
-# Bot, color, and logger configs.
-config = load_bot_configs()
-colors = load_colors()
+# Color and logger configs.
+colors = load_config("colors")
 logger = logging.getLogger()
 
 
@@ -65,6 +64,7 @@ class Calendar(commands.Cog, name="calendar"):
                         r'(?<=CHANNELS: )\d+[^\\\n]*', description)[0].split(',')
                     channels = list(map(lambda c: int(c.strip()), channels))
                 except IndexError:
+                    # TODO: Fix to work with new config layout.
                     channels = [config["general_channel_id"]]
 
                 # Get episodes to watch.
