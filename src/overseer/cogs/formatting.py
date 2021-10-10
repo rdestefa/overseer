@@ -68,6 +68,20 @@ class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
             self.bot.get_command('say'), mode=mode, args=message)
 
     @commands.command(
+        name="expand",
+        usage="expand <mode> <message>",
+        brief="Space out a message."
+    )
+    async def expand(self, context, mode: str, *, args):
+        """
+        The Overseer will add space between each character in your message.
+        """
+        message = ' '.join(list(args))
+
+        await context.invoke(
+            self.bot.get_command('say'), mode=mode, args=message)
+
+    @commands.command(
         name="leetspeak",
         usage="leetspeak <mode> <message>",
         brief="Translate text into leetspeak."
@@ -85,6 +99,27 @@ class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
                    .replace('s', random.choice(self._S))
                    .replace('t', random.choice(self._T))
                    )
+
+        await context.invoke(
+            self.bot.get_command('say'), mode=mode, args=message)
+
+    @commands.command(
+        name="mock",
+        usage="mock <mode> <message>",
+        brief="Mocks a message."
+    )
+    async def mock(self, context, mode: str, *, args):
+        """
+        The Overseer will mock the phrase you sent.
+        """
+        args = args.lower().strip()
+        message = ''
+
+        for index, character in enumerate(args):
+            if index % 2:
+                character = character.upper()
+
+            message += character
 
         await context.invoke(
             self.bot.get_command('say'), mode=mode, args=message)

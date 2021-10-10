@@ -33,21 +33,14 @@ class Conversion(commands.Cog, name="conversion"):
     def __init__(self, bot):
         self.bot = bot
         self.configs = load_config("conversion", safe=False)
-        # M4V and GIF need special options.
-        self.special_conversions = {
-            "gif": {
-                "to": ["-pix_fmt", "yuv420p"]
-            }
-        }
 
-    # TODO: Restrucuture options to support FLV.
     async def convert_files(
         self,
         temp_dir: str,
         from_type: str,
         to_type: str,
         attachment: discord.Attachment,
-        args: list[list[str]] = [[], []]
+        options: list[list[str]] = [[], []]
     ) -> tuple[str, int]:
         """
         Helper function to convert files from one type to another.
@@ -68,11 +61,12 @@ class Conversion(commands.Cog, name="conversion"):
           -frames:v <n>: Take only the first `n` frames of a video.
           -vf format=<format>: Pixel format for the image / video.
           -y <output_path>: Path for output file (overwrite existing file).
+
         """
         args = (["ffmpeg"]
-                + args[0]
+                + options[0]
                 + ["-i", input]
-                + args[1]
+                + options[1]
                 + ["-y", output])
         result = subprocess.call(
             args,
@@ -102,31 +96,49 @@ class Conversion(commands.Cog, name="conversion"):
         await attachment.save(fp=input)
 
         # Extract the frame rate of the input video.
-        ffmpeg_output = subprocess.call([
+        ffmpeg_output = subprocess.check_output([
             "ffprobe", input,
-            "-v", "0",                                # First video.
+            "-v", "quiet",                            # Suppress all output.
             "-of", "csv=p=0",                         # Remove extra text.
-            "-select-streams", "v",                   # Video input.
-            "-show_entries", "stream=avg_frame_rate"  # Avg framerate as frac.
+            "-select_streams", "v",                   # Video input.
+            "-show_entries", "stream=avg_frame_rate"  # Avg fps as fraction.
         ])
         top, bottom = ffmpeg_output.decode("utf-8").strip().split("/")
-        framerate = round(int(top) / int(bottom), 2)\
+        fps = round(int(top) / int(bottom), 2)
 
-        palette_result = subprocess.call([
-            "ffmpeg", "-i", input,
-            "-vf", f"fps={framerate},scale=512:-1:fkags=lanczos,palettegen",
-            "-y", palette
-        ])
+        """
+        Generate a pallete for the GIF with the following arguments:
 
+          -vf fps=<fps>: Match the FPS of the input video.
+              scale=512:-1: Adjust height based on a width of 512px.
+              flags=lanczos,palettegen: Scaling and palette algorithms.
+
+        """
+        palette_result = subprocess.call(
+            [
+                "ffmpeg", "-i", input,
+                "-vf", f"fps={fps},scale=512:-1:flags=lanczos,palettegen",
+                "-y", palette
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+        # Stop conversion if an error occurs.
         if palette_result:
-            # TODO: Error handler
-            pass
+            return None, palette_result
 
-        result = subprocess.call([
-            "ffmpeg", "-i", input, "-i", palette,
-            "-lavfi", f'"fps={framerate},scale=512:-1:flags=lanczos [x]; [x][1:v] paletteuse"',
-            "-y", output
-        ])
+        # Generate GIF from palette.
+        result = subprocess.call(
+            [
+                "ffmpeg", "-i", input, "-i", palette,
+                "-lavfi", (f"fps={fps},scale=512:-1:flags=lanczos "
+                           + "[x]; [x][1:v] paletteuse"),
+                "-y", output
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
 
         return output, result
 
@@ -304,28 +316,45 @@ class Conversion(commands.Cog, name="conversion"):
 
                 # Explicitly check for 0 in case `result` is `None`.
                 if result == 0:
-                    await context.send(
-                        embed=discord.Embed(
-                            title="File Converted",
-                            description=(f"Here's your `{to_type}` file. " +
-                                         "Tips are appreciated, but not " +
-                                         "required."),
-                            color=colors["green"]
-                        ),
-                        file=discord.File(
-                            output,
-                            filename=f"{filename}.{to_type}"
+                    try:
+                        await context.send(
+                            embed=discord.Embed(
+                                title="File Converted",
+                                description=(f"Here's your `{to_type}` file. "
+                                             + "Tips are appreciated, but not "
+                                             + "required."),
+                                color=colors["green"]
+                            ),
+                            file=discord.File(
+                                output,
+                                filename=f"{filename}.{to_type}"
+                            )
                         )
-                    )
-                    logger.info(
-                        "Converted %s.%s sent by %s (ID: %s) to %s.%s",
-                        filename,
-                        from_type,
-                        context.message.author,
-                        context.message.author.id,
-                        filename,
-                        to_type
-                    )
+                        logger.info(
+                            "Converted %s.%s sent by %s (ID: %s) to %s.%s",
+                            filename,
+                            from_type,
+                            context.message.author,
+                            context.message.author.id,
+                            filename,
+                            to_type
+                        )
+                    except discord.HTTPException as e:
+                        await context.send(
+                            embed=discord.Embed(
+                                title="File Too Large!",
+                                description=("I was able to convert the file, "
+                                             + "but I can't upload it."),
+                                color=colors["red"]
+                            )
+                        )
+                        logger.error(
+                            "The converted %s.%s too large to upload (%s): %s",
+                            filename,
+                            to_type,
+                            type(e).__name__,
+                            str(e)
+                        )
                 else:
                     await context.send(embed=discord.Embed(
                         title="Failed to Convert File!",
