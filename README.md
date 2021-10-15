@@ -38,7 +38,7 @@ All the Overseer's configuration files are listed below:
 
     ```
     token: <token: string>
-    application_id: <id: string>
+    application_id: <id: int>
     owners:
       - <owner1_id: int>
       - <owner2_id: int>

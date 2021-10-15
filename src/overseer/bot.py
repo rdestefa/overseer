@@ -47,7 +47,7 @@ async def not_blacklisted(context):
     with open("lists/blacklist.json", "r") as file:
         blacklist = json.load(file)
 
-    user_id = glom.glom(context, 'message.author.id', default=None)
+    user_id = glom.glom(context, "message.author.id", default=None)
     if user_id is not None and user_id in blacklist["ids"]:
         raise custom_exceptions.MemberBlacklisted(context.message.author)
 
@@ -100,7 +100,7 @@ async def on_command_completion(context):
 async def on_command_error(context, error):
     # `command.qualified_name` won't populate on a nonexistent command.
     failed_command = glom.glom(
-        context, glom.Coalesce('command.qualified_name', 'invoked_with'))
+        context, glom.Coalesce("command.qualified_name", "invoked_with"))
     logger.error(
         "%s (ID: %s) failed to execute %s (%s): %s",
         context.message.author,

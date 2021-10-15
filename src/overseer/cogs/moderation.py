@@ -7,7 +7,7 @@ from utils.configs import load_config
 import discord
 from discord.ext import commands
 
-# Color, and logger configs.
+# Color and logger configs.
 colors = load_config("colors")
 logger = logging.getLogger()
 

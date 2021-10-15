@@ -1,5 +1,6 @@
 # overseer.utils.configs
 
+from glom import glom
 import logging
 import logging.config
 import os
@@ -20,7 +21,7 @@ def load_bot_configs(
         with open(bot_config_path) as file:
             config = yaml.safe_load(file)
     else:
-        sys.exit(f"'{bot_config_path}' not found!")
+        sys.exit(f"'{bot_config_path}' not found")
 
     # Initialize Overseer logger.
     if os.path.isfile(logger_config_path):
@@ -36,6 +37,7 @@ def load_bot_configs(
 def load_config(
     filename: str,
     safe: bool = True,
+    required: bool = True,
     default: dict[Any, Any] | list[Any] = {},
     config_dir: str = None
 ) -> dict[Any, Any] | list[Any]:
@@ -49,7 +51,25 @@ def load_config(
             else:
                 config = yaml.full_load(file)
     else:
-        logging.warning(f"'{config_path}' not found! Using default values.")
-        config = default
+        if not required:
+            logging.warning(f"'{config_path}' not found! Default values used.")
+            config = default
+        else:
+            sys.exit(f"'{config_path}' not found")
 
     return config
+
+
+def load_config_attr(
+    filename: str,
+    attr: Any,
+    safe: bool = True,
+    config_dir: str = None,
+    default: Any = None
+) -> Any:
+    configs = load_config(filename, safe, False, config_dir=config_dir)
+
+    if configs and isinstance(configs, dict):
+        return glom(configs, attr, default=default)
+    else:
+        return None
