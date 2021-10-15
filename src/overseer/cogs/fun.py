@@ -5,7 +5,7 @@ import json
 import logging
 import random
 
-from helpers.config_helpers import load_config
+from utils.configs import load_config
 
 import aiohttp
 import discord

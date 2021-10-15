@@ -3,12 +3,12 @@
 import json
 import logging
 
-from helpers.config_helpers import load_config
+from utils.configs import load_config
 
 import discord
 from discord.ext import commands
 
-from helpers import json_helpers
+from utils import moderation
 
 # Color, and logger configs.
 colors = load_config("colors")
@@ -67,7 +67,7 @@ class Owner(commands.Cog, name="owner"):
                 )
                 return
 
-            json_helpers.add_user_to_blacklist(member.id)
+            moderation.blacklist_add(member.id)
         except Exception as e:
             logger.error(
                 "Failed to blacklist %s (%s): %s",
@@ -110,7 +110,7 @@ class Owner(commands.Cog, name="owner"):
         Remove a user from the Overseer's blacklist.
         """
         try:
-            json_helpers.remove_user_from_blacklist(member.id)
+            moderation.blacklist_remove(member.id)
         except ValueError as e:
             logger.error(
                 "%s is not in the blacklist (%s): %s",

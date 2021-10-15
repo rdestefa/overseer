@@ -1,4 +1,4 @@
-# overseer.helpers.error_helpers
+# overseer.utils.error_handlers
 
 import Levenshtein as lev
 
@@ -6,31 +6,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 
-
-# ---------------------------- CUSTOM EXCEPTIONS ---------------------------- #
-
-
-class MemberBlacklisted(commands.CheckFailure):
-    """
-    Custom exception to be thrown when a blacklisted user tries to issue
-    a command to the Overseer.
-    """
-
-    def __init__(
-        self,
-        member: discord.Member,
-        message: str = "The Overseer ignores blacklisted users"
-    ):
-        self.member = member
-        self.message = message
-
-        super().__init__(self.message)
-
-    def __str__(self):
-        return f"{self.member.name} is blacklisted. {self.message}"
-
-
-# ----------------------------- ERROR HANDLERS ------------------------------ #
+from utils import custom_exceptions
 
 
 def handle_command_not_found(
@@ -86,7 +62,7 @@ def handle_member_not_found(error: commands.MemberNotFound) -> discord.Embed:
     return embed
 
 
-def handle_member_blacklisted(error: MemberBlacklisted) -> discord.Embed:
+def handle_member_blacklisted(error: custom_exceptions.MemberBlacklisted) -> discord.Embed:
     embed = discord.Embed(
         title="You're Blacklisted!",
         description=(f"You're on my blacklist, **{error.member.name}**.\n" +
@@ -162,7 +138,29 @@ def handle_error(
     prefix: str,
     color: int
 ) -> discord.Embed:
-    if isinstance(error, commands.CommandNotFound):
+    match type(error):
+        case commands.CommandNotFound:
+            embed = handle_command_not_found(bot, error, prefix)
+        case commands.CommandOnCooldown:
+            embed = handle_command_on_cooldown(error)
+        case commands.MemberNotFound:
+            embed = handle_member_not_found(error)
+        case custom_exceptions.MemberBlacklisted:
+            embed = handle_member_blacklisted(error)
+        case commands.NotOwner:
+            embed = handle_not_owner(failed_command, prefix)
+        case commands.MissingPermissions:
+            embed = handle_missing_permissions(error)
+        case commands.MissingRequiredArgument:
+            embed = handle_missing_required_argument(error, prefix)
+        case commands.TooManyArguments:
+            embed = handle_too_many_arguments(failed_command, prefix)
+        case commands.BadArgument:
+            embed = handle_bad_argument(error, prefix)
+        case _:
+            embed = handle_generic_error()
+
+    '''if isinstance(error, commands.CommandNotFound):
         embed = handle_command_not_found(bot, error, prefix)
     elif isinstance(error, commands.CommandOnCooldown):
         embed = handle_command_on_cooldown(error)
@@ -181,7 +179,7 @@ def handle_error(
     elif isinstance(error, commands.BadArgument):
         embed = handle_bad_argument(error, prefix)
     else:
-        embed = handle_generic_error()
+        embed = handle_generic_error()'''
 
     embed.color = color
     return embed

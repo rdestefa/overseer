@@ -8,8 +8,9 @@ import os
 import platform
 
 from cogs import load_cogs
-from helpers.config_helpers import load_bot_configs, load_config
-from helpers.error_helpers import MemberBlacklisted, handle_error
+from utils import custom_exceptions
+from utils.configs import load_bot_configs, load_config
+from utils.error_handlers import handle_error
 
 import discord
 from discord.ext.commands import Bot
@@ -48,7 +49,7 @@ async def not_blacklisted(context):
 
     user_id = glom.glom(context, 'message.author.id', default=None)
     if user_id is not None and user_id in blacklist["ids"]:
-        raise MemberBlacklisted(context.message.author)
+        raise custom_exceptions.MemberBlacklisted(context.message.author)
 
     return True
 

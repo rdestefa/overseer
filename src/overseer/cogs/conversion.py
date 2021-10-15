@@ -6,7 +6,7 @@ import os
 import subprocess
 import uuid
 
-from helpers.config_helpers import load_config
+from utils.configs import load_config
 
 import discord
 from discord.ext import commands

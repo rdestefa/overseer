@@ -11,6 +11,6 @@
 - [discord.py](https://discordpy.readthedocs.io/en/stable/) (The Discord API for Python)
 - [glom](https://glom.readthedocs.io/en/latest/index.html) (`overseer.bot`)
 - [icalendar](https://icalendar.readthedocs.io/en/latest/#) (`overseer.cogs.calendar`)
-- [pyyaml](https://pyyaml.org/wiki/PyYAMLDocumentation) (`overseer.helpers.config_helpers`)
-- [python-Levenshtein](https://www.coli.uni-saarland.de/courses/LT1/2011/slides/Python-Levenshtein.html) (`overseer.helpers.error_helpers`)
+- [pyyaml](https://pyyaml.org/wiki/PyYAMLDocumentation) (`overseer.utils.configs`)
+- [python-Levenshtein](https://www.coli.uni-saarland.de/courses/LT1/2011/slides/Python-Levenshtein.html) (`overseer.utils.error_handlers`)
 - [asynctempfile](https://pypi.org/project/asynctempfile/) (`overseer.cogs.conversion`)
