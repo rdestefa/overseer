@@ -24,6 +24,7 @@ The Overseer is a basic asynchronous [Discord](https://discord.com/) bot using [
 ## Non-Python Dependencies
 
 - [ffmpeg](https://www.ffmpeg.org/) (`overseer.cogs.conversion`)
+- [ffprobe](https://ffmpeg.org/ffprobe.html) (`overseer.cogs.conversion`)
 
 ## Configuration
 
