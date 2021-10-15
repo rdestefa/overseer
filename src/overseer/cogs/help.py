@@ -24,7 +24,7 @@ class Help(commands.Cog, name="help"):
     async def help(self, context, *, command=None):
         """
         Display help text for a specific command.
-        If no command is specified, the Overseer will list all commands from every Cog that it's loaded.
+        If no command is specified, the Overseer will list all its commands.
         """
         if command is not None:
             # Trim prefix from command.
@@ -34,31 +34,38 @@ class Help(commands.Cog, name="help"):
             # Search for matching command.
             if (cmd := self.bot.get_command(command)) is not None and not cmd.hidden:
                 title = (f"{cmd.name.replace('_', ' ').title()} (Usage: `{self.bot.command_prefix}{cmd.usage}`)" if not cmd.parents
-                         else f"{cmd.qualified_name.title()} (Usage: `{self.bot.command_prefix}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
+                         else f"{cmd.qualified_name.replace('_', ' ').title()} (Usage: `{self.bot.command_prefix}{' '.join(map(str, cmd.parents))} {cmd.usage}`)")
                 embed = discord.Embed(
                     title=title,
                     description=f"{cmd.help}",
                     color=colors["green"]
                 )
+
                 await context.send(embed=embed)
                 return
 
-            # Command not found.
+            # If no valid command was found, throw an exception.
             raise commands.CommandNotFound(f'Command "{command}" is not found')
 
         prefix = self.bot.command_prefix
+
+        # In case the bot has a list of prefixes.
         if not isinstance(prefix, str):
             prefix = prefix[0]
+
         embed = discord.Embed(
             title="Help",
             description="Witness the extent of my power.",
             color=colors["green"]
         )
+
+        # Add commands for each Cog to the embed separately.
         for cog_name in self.bot.cogs:
             cog = self.bot.get_cog(cog_name.lower())
             cmd_attrs = [(cmd.usage, cmd.brief, cmd.parents)
                          for cmd in cog.walk_commands() if not cmd.hidden]
 
+            # Create bulleted list with proper indentation for each Cog.
             help_text = "\n".join(
                 f"{prefix}{usage} - {brief}" if not parents
                 else f"{'  ' * len(parents)}+ {usage} - {brief}"

@@ -62,7 +62,7 @@ def load_config(
 
 def load_config_attr(
     filename: str,
-    attr: Any,
+    spec: str | dict[Any, Any],
     safe: bool = True,
     config_dir: str = None,
     default: Any = None
@@ -70,6 +70,6 @@ def load_config_attr(
     configs = load_config(filename, safe, False, config_dir=config_dir)
 
     if configs and isinstance(configs, dict):
-        return glom(configs, attr, default=default)
+        return glom(configs, spec, default=default)
     else:
         return None
