@@ -1,6 +1,6 @@
 # Overseer
 
-The Overseer is a basic asynchronous [Discord](https://discord.com/) bot that carries out simple tasks for the following:
+The Overseer is a basic asynchronous [Discord](https://discord.com/) bot using [asyncio](https://docs.python.org/3/library/asyncio.html) that carries out simple tasks for the following:
 
 - Calendar management
 - File conversion
@@ -13,12 +13,11 @@ The Overseer is a basic asynchronous [Discord](https://discord.com/) bot that ca
 
 ## Dependencies (Non-Standard Library)
 
-- [aiohttp](https://docs.aiohttp.org/en/stable/) (The Overseer's core)
-- [asyncio](https://docs.python.org/3/library/asyncio.html) (The Overseer's core)
-- [discord.py](https://discordpy.readthedocs.io/en/stable/) (The Discord API for Python)
+- [discord.py](https://discordpy.readthedocs.io/en/stable/) (The Overseer's Core)
 - [glom](https://glom.readthedocs.io/en/latest/index.html) (`overseer.bot`)
 - [icalendar](https://icalendar.readthedocs.io/en/latest/#) (`overseer.cogs.calendar`)
 - [asynctempfile](https://pypi.org/project/asynctempfile/) (`overseer.cogs.conversion`)
+- [aiohttp](https://docs.aiohttp.org/en/stable/) (`overseer.cogs.fun`)
 - [pyyaml](https://pyyaml.org/wiki/PyYAMLDocumentation) (`overseer.utils.configs`)
 - [python-Levenshtein](https://www.coli.uni-saarland.de/courses/LT1/2011/slides/Python-Levenshtein.html) (`overseer.utils.error_handlers`)
 
@@ -66,7 +65,7 @@ All the Overseer's configuration files are listed below:
     ```
     valid_conversions:
       !!python/tuple [<from_extension: string>, <to_extension: string>]:
-        [[input_arguments: string], [output_arguments: string]]
+        [[<input_arguments: string>], [<output_arguments: string>]]
       ...
     aliases:
       <extension: string>: <aliased_extension: string>

@@ -1,0 +1,7 @@
+discord.py[voice]
+glom
+icalendar
+asynctempfile
+aiohttp
+PyYAML
+python-Levenshtein
