@@ -18,7 +18,7 @@ The Overseer is a basic asynchronous [Discord](https://discord.com/) bot using [
 - [icalendar](https://icalendar.readthedocs.io/en/latest/#) (`overseer.cogs.calendar`)
 - [asynctempfile](https://pypi.org/project/asynctempfile/) (`overseer.cogs.conversion`)
 - [aiohttp](https://docs.aiohttp.org/en/stable/) (`overseer.cogs.fun`)
-- [pyyaml](https://pyyaml.org/wiki/PyYAMLDocumentation) (`overseer.utils.configs`)
+- [PyYAML](https://pyyaml.org/wiki/PyYAMLDocumentation) (`overseer.utils.configs`)
 - [python-Levenshtein](https://www.coli.uni-saarland.de/courses/LT1/2011/slides/Python-Levenshtein.html) (`overseer.utils.error_handlers`)
 
 ## Non-Python Dependencies
