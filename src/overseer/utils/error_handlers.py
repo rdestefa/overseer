@@ -160,26 +160,5 @@ def handle_error(
         case _:
             embed = handle_generic_error()
 
-    '''if isinstance(error, commands.CommandNotFound):
-        embed = handle_command_not_found(bot, error, prefix)
-    elif isinstance(error, commands.CommandOnCooldown):
-        embed = handle_command_on_cooldown(error)
-    elif isinstance(error, commands.MemberNotFound):
-        embed = handle_member_not_found(error)
-    elif isinstance(error, MemberBlacklisted):
-        embed = handle_member_blacklisted(error)
-    elif isinstance(error, commands.NotOwner):
-        embed = handle_not_owner(failed_command, prefix)
-    elif isinstance(error, commands.MissingPermissions):
-        embed = handle_missing_permissions(error)
-    elif isinstance(error, commands.MissingRequiredArgument):
-        embed = handle_missing_required_argument(error, prefix)
-    elif isinstance(error, commands.TooManyArguments):
-        embed = handle_too_many_arguments(failed_command, prefix)
-    elif isinstance(error, commands.BadArgument):
-        embed = handle_bad_argument(error, prefix)
-    else:
-        embed = handle_generic_error()'''
-
     embed.color = color
     return embed
