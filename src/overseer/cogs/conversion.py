@@ -21,13 +21,13 @@ class Conversion(commands.Cog, name="conversion"):
     Cog for converting files from one type to another, both automatically
     and on command.
 
-    There exists a Python abstraction for using ffmpeg, linked below:
+    There exists a Python library for using ffmpeg, linked below:
 
       - https://kkroening.github.io/ffmpeg-python/#
 
     This library is not very robust, however, and its async execution will
     deadlock if the `quiet` option (suppress output) is set to True. Due to
-    these limitations, this cog calls ffmpeg directly through `subprocess`.
+    these limitations, this Cog calls ffmpeg directly through `subprocess`.
     """
 
     def __init__(self, bot):
@@ -56,8 +56,8 @@ class Conversion(commands.Cog, name="conversion"):
         Summary of common options passed into ffmpeg:
 
           -i <input_path>: Path to file being converted.
-          -<codec:v>|<-c:v> copy: Copy or add playback metadata to the file.
-          -<codec:a>|<-c:a> copy: Copy or add audio metadata to the file.
+          -<codec:v>|<c:v> copy: Copy or add playback metadata to the file.
+          -<codec:a>|<c:a> copy: Copy or add audio metadata to the file.
           -frames:v <n>: Take only the first `n` frames of a video.
           -vf format=<format>: Pixel format for the image / video.
           -y <output_path>: Path for output file (overwrite existing file).
@@ -286,15 +286,14 @@ class Conversion(commands.Cog, name="conversion"):
         # Don't convert the same file types.
         if from_type == to_type:
             await context.send(embed=discord.Embed(
-                title="Same Extension!",
+                title="Same File Type!",
                 description=("Why would I convert a file that's already a "
                              + f"`{to_type}`?"),
                 color=colors["red"]
             ))
             return
 
-        if ((from_type, to_type) in self.configs["valid_conversions"] or
-                (to_type, from_type) in self.configs["valid_conversions"]):
+        if ((from_type, to_type) in self.configs["valid_conversions"]):
             async with asynctempfile.TemporaryDirectory() as temp:
                 if to_type == 'gif':
                     output, result = await self.convert_to_gif(
@@ -371,7 +370,7 @@ class Conversion(commands.Cog, name="conversion"):
                     )
         else:
             await context.send(embed=discord.Embed(
-                title="Invalid Conversion!",
+                title="Unsupported File Type!",
                 description=f"I can't convert `{from_type}` to `{to_type}`.",
                 color=colors["red"]
             ))
