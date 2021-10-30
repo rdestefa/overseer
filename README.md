@@ -36,15 +36,15 @@ All the Overseer's configuration files are listed below:
 
   - `overseer.yaml` - The essential configs for the Overseer. Example formatting:
 
-    ```
-    token: <token: string>
-    application_id: <id: int>
+    ```yaml
+    token: <token - string>
+    application_id: <id - int>
     owners:
-      - <owner1_id: int>
-      - <owner2_id: int>
+      - <owner1_id - int>
+      - <owner2_id - int>
       ...
-    general_channel_id: <channel_id: int>
-    bot_prefix: <prefix: string>
+    general_channel_id: <channel_id - int>
+    bot_prefix: <prefix - string>
     intents:
       bans: <boolean>
       dm_messages: <boolean>
@@ -54,36 +54,35 @@ All the Overseer's configuration files are listed below:
 
   - `colors.yaml` - All the colors that the Overseer will use during execution. Example formatting:
 
-    ```
-    red: <hex_code: int>
-    yellow: <hex_code: int>
-    green: <hex_code: int>
-    ...
+    ```yaml
+    red: <hex_code - int>
+    yellow: <hex_code - int>
+    green: <hex_code - int>
     ```
 
   - `conversion.yaml` - The different kinds of supported file conversions and their associated `ffmpeg` arguments. Example formatting:
 
-    ```
+    ```yaml
     valid_conversions:
-      !!python/tuple [<from_extension: string>, <to_extension: string>]:
-        [[<input_arguments: string>], [<output_arguments: string>]]
+      !!python/tuple [<from_extension - string>, <to_extension - string>]:
+        [[<input_arguments - string>], [<output_arguments - string>]]
       ...
     aliases:
-      <extension: string>: <aliased_extension: string>
+      <extension - string>: <aliased_extension - string>
       ...
-    unsupported_embeds: !!set {<extension: string>}
+    unsupported_embeds: !!set {<extension - string>}
     ```
 
 - Optional
 
   - `logging.yaml` - The Overseer's logger configurations. Example formatting:
 
-    ```
-    version: <version_no: int>
+    ```yaml
+    version: <version_no - int>
     formatters:
-      <formatter_name: string>:
-        format: <format_string: string>
-        datefmt: <data_format_string: string>
+      <formatter_name - string>:
+        format: <format_string - string>
+        datefmt: <date_format_string - string>
     handlers:
       console:
         class: logging.StreamHandler
