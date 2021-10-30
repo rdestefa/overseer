@@ -21,7 +21,6 @@ logger = logging.getLogger()
 class Fun(commands.Cog, name="fun"):
     def __init__(self, bot):
         self.bot = bot
-        self.mention_modifiers = {"!", "&", "#"}
         self.eight_ball_responses = (
             (
                 ("It is certain.", "green"),
@@ -51,7 +50,7 @@ class Fun(commands.Cog, name="fun"):
             )
         )
 
-    async def parse_mentions(self, message: str, guild: discord.Guild) -> str:
+    def parse_mentions(self, message: str, guild: discord.Guild) -> str:
         new_message, start_index = '', 0
 
         for match in re.finditer(r"<[@#][!&]?\d*>", message):
@@ -85,7 +84,7 @@ class Fun(commands.Cog, name="fun"):
 
         return new_message + message[start_index:]
 
-    @ commands.command(
+    @commands.command(
         name="bitcoin",
         usage="bitcoin",
         brief="Get the current price of Bitcoin."
@@ -118,12 +117,12 @@ class Fun(commands.Cog, name="fun"):
         - BucketType.server for a per-server cooldown.
         - BucketType.channel for a per-channel cooldown.
     """
-    @ commands.command(
+    @commands.command(
         name="dailyfact",
         usage="dailyfact",
         brief="Get your daily dose of knowledge."
     )
-    @ commands.cooldown(1, 86400, BucketType.user)
+    @commands.cooldown(1, 86400, BucketType.user)
     async def dailyfact(self, context):
         """
         Get a random fact from the Internet once per day per user.
@@ -304,7 +303,7 @@ class Fun(commands.Cog, name="fun"):
             color=colors[response[1]]
         )
 
-        question = await self.parse_mentions(question, context.guild)
+        question = self.parse_mentions(question, context.guild)
         embed.set_footer(
             text=f"{context.message.author.name} asked: {question}"
         )
