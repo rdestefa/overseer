@@ -293,7 +293,7 @@ class Conversion(commands.Cog, name="conversion"):
             ))
             return
 
-        if ((from_type, to_type) in self.configs["valid_conversions"]):
+        if (from_type, to_type) in self.configs["valid_conversions"]:
             async with asynctempfile.TemporaryDirectory() as temp:
                 if to_type == 'gif':
                     output, result = await self.convert_to_gif(
