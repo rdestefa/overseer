@@ -24,29 +24,32 @@ def handle_command_not_found(
     lev_min = min(lev_dists)
 
     # Build error message.
-    description = f"I don't recognize the `{prefix}{invalidCommand}` command.\n"
+    desc = f"I don't recognize the `{prefix}{invalidCommand}` command.\n"
     if lev_min <= 0.5:
-        description += f"Did you mean `{prefix}{cmds[lev_dists.index(lev_min)]}`?"
+        desc += f"Did you mean `{prefix}{cmds[lev_dists.index(lev_min)]}`?"
     else:
-        description += f"Try calling `{prefix}help` for a list of valid commands."
+        desc += f"Try calling `{prefix}help` for a list of valid commands."
 
     # Send message.
     embed = discord.Embed(
         title="Command Not Found!",
-        description=description
+        description=desc
     )
 
     return embed
 
 
 def handle_command_on_cooldown(error: commands.CommandOnCooldown) -> discord.Embed:
-    minutes, seconds = divmod(error.retry_after, 60)
-    hours, minutes = divmod(minutes, 60)
-    hours = hours % 24
+    mins, secs = divmod(error.retry_after, 60)
+    hrs, mins = divmod(mins, 60)
+    hrs = hrs % 24
 
     embed = discord.Embed(
         title="Hey! Slow down!",
-        description=f"You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}."
+        description=("You can use this command again in"
+                     + (f" {round(hrs)} hours" if round(hrs) > 0 else "")
+                     + (f" {round(mins)} minutes" if round(mins) > 0 else "")
+                     + (f" {round(secs)} seconds" if round(secs) > 0 else ""))
     )
 
     return embed
@@ -75,7 +78,7 @@ def handle_member_blacklisted(error: custom_exceptions.MemberBlacklisted) -> dis
 def handle_not_owner(failed_command: str, prefix: str) -> discord.Embed:
     embed = discord.Embed(
         title="Not an Owner!",
-        description=f"Only my owners owners can execute `{prefix}{failed_command}`."
+        description=f"Only my owners can execute `{prefix}{failed_command}`."
     )
 
     return embed

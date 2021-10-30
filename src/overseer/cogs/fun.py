@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 
 from utils.configs import load_config
 
@@ -20,8 +21,71 @@ logger = logging.getLogger()
 class Fun(commands.Cog, name="fun"):
     def __init__(self, bot):
         self.bot = bot
+        self.mention_modifiers = {"!", "&", "#"}
+        self.eight_ball_responses = (
+            (
+                ("It is certain.", "green"),
+                ("It is decidedly so.", "green"),
+                ("You may rely on it.", "green"),
+                ("Without a doubt.", "green"),
+                ("Yes - definitely.", "green"),
+                ("As I see it, yes.", "green"),
+                ("Most likely.", "green"),
+                ("Outlook good.", "green"),
+                ("Yes.", "green"),
+                ("Signs point to yes.", "green")
+            ),
+            (
+                ("Reply hazy, try again.", "yellow"),
+                ("Better not tell you now.", "yellow"),
+                ("Cannot predict now.", "yellow"),
+                ("Ask again later.", "yellow"),
+                ("Concentrate and ask again.", "yellow")
+            ),
+            (
+                ("Don't count on it.", "red"),
+                ("My sources say no.", "red"),
+                ("Very doubtful.", "red"),
+                ("My reply is no.", "red"),
+                ("Outlook not so good.", "red")
+            )
+        )
 
-    @commands.command(
+    async def parse_mentions(self, message: str, guild: discord.Guild) -> str:
+        new_message, start_index = '', 0
+
+        for match in re.finditer(r"<[@#][!&]?\d*>", message):
+            # Slice message at start and end indices of the match.
+            end_index, new_start_index = match.span()
+            new_message += message[start_index:end_index]
+
+            # Extract user, role, or channel ID from match.
+            id = match[0].replace("<", "").replace(">", "")
+
+            if id[0] == "@":
+                if id[1] == "!":  # Nickname
+                    obj_from_id = self.bot.get_user(int(id[2:]))
+                elif id[1] == "&":  # Role
+                    obj_from_id = (guild.get_role(int(id[2:]))
+                                   if guild else None)
+                else:  # Regular username
+                    obj_from_id = self.bot.get_user(int(id[1:]))
+            elif id[0] == "#":  # Channel
+                obj_from_id = self.bot.get_channel(int(id[1:]))
+            else:
+                continue
+
+            # If ID couldn't be converted, don't replace matched string.
+            if not obj_from_id:
+                continue
+
+            # Update message string and start index.
+            new_message += obj_from_id.name
+            start_index = new_start_index
+
+        return new_message + message[start_index:]
+
+    @ commands.command(
         name="bitcoin",
         usage="bitcoin",
         brief="Get the current price of Bitcoin."
@@ -31,59 +95,62 @@ class Fun(commands.Cog, name="fun"):
         Get the current price of Bitcoin from coindesk.com.
         """
         url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
-        # Async HTTP request.
+        # Asynchronously fetch data from the coindesk API.
         async with aiohttp.ClientSession() as session:
             raw_response = await session.get(url)
             response = await raw_response.text()
             response = json.loads(response)
-            embed = discord.Embed(
-                title=":information_source: Crypto",
-                description=f"Bitcoin price is: ${response['bpi']['USD']['rate']}",
+
+            await context.send(embed=discord.Embed(
+                title="Current Bitcoin Price :coin:",
+                description=f"${response['bpi']['USD']['rate']}",
                 color=colors["green"]
-            )
-            await context.send(embed=embed)
+            ))
 
     """
     Why 1 and 86400?
-    -> The user should be able to use the command *once* every *86400* seconds.
+      - Users should be able to use the command *once* every *86400* seconds.
 
     Why BucketType.user?
-    -> The cooldown only affects the current user. Other kinds of cooldowns:
-      - BucketType.default for a global basis.
-      - BucketType.user for a per-user basis.
-      - BucketType.server for a per-server basis.
-      - BucketType.channel for a per-channel basis.
+      - The cooldown only affects the current user. Other kinds of cooldowns:
+        - BucketType.default for a global cooldown.
+        - BucketType.user for a per-user cooldown.
+        - BucketType.server for a per-server cooldown.
+        - BucketType.channel for a per-channel cooldown.
     """
-
-    @commands.command(
+    @ commands.command(
         name="dailyfact",
         usage="dailyfact",
         brief="Get your daily dose of knowledge."
     )
-    @commands.cooldown(1, 86400, BucketType.user)
+    @ commands.cooldown(1, 86400, BucketType.user)
     async def dailyfact(self, context):
         """
-        Get a random fact from the Internet. Can only run once per day per user.
+        Get a random fact from the Internet once per day per user.
         """
-        # This will prevent the Overseer from stopping everything when making a web request.
-        # See https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request.
+        # Asynchronously fetch data from the useless facts API.
+        url = "https://uselessfacts.jsph.pl/random.json?language=en"
         async with aiohttp.ClientSession() as session:
-            async with session.get("https://uselessfacts.jsph.pl/random.json?language=en") as request:
-                if request.status == 200:
-                    data = await request.json()
-                    embed = discord.Embed(
-                        description=data["text"], color=colors["purple"])
-                    await context.send(embed=embed)
+            async with session.get(url, ssl=False) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    await context.send(embed=discord.Embed(
+                        description=data["text"],
+                        color=colors["purple"]
+                    ))
                 else:
                     logger.warning(
-                        'Failed to fetch a daily fact from the useless facts API. Error code: %s', request.status)
-                    embed = discord.Embed(
-                        title="Error!",
-                        description="There's an issue with the useless facts API. Please try again later",
-                        color=colors["red"]
+                        "Failed to fetch a daily fact. Error code: %s",
+                        response.status
                     )
-                    await context.send(embed=embed)
-                    # We need to reset the cooldown since the user didn't get their daily fact.
+                    await context.send(embed=discord.Embed(
+                        title="Error!",
+                        description=("I can't get any facts from the Internet "
+                                     + "right now. Please try again later."),
+                        color=colors["red"]
+                    ))
+
+                    # Reset user's cooldown since they missed their daily fact.
                     self.dailyfact.reset_cooldown(context)
 
     @commands.command(
@@ -119,62 +186,70 @@ class Fun(commands.Cog, name="fun"):
         Play rock, paper, scissors with the me. It's a fight to the death!
         I don't like time-wasters, so you'll have 10 seconds to respond.
         """
-        choices = {
-            0: "rock",
-            1: "paper",
-            2: "scissors"
-        }
         reactions = {
             "🪨": 0,
             "🧻": 1,
             "✂": 2
         }
-        embed = discord.Embed(title="Choose your weapon!",
-                              color=colors["orange"])
-        embed.set_author(name=context.author.display_name,
-                         icon_url=context.author.avatar_url)
-        choose_message = await context.send(embed=embed)
-        for emoji in reactions:
-            await choose_message.add_reaction(emoji)
 
-        def check(reaction, user):
-            return user == context.message.author and str(reaction) in reactions
+        # Create embed that will be used to play rock, paper, scissors.
+        embed = discord.Embed(
+            title="Choose your weapon!",
+            color=colors["orange"]
+        )
+        embed.set_author(
+            name=context.author.display_name,
+            icon_url=context.author.avatar_url
+        )
+        options_msg = await context.send(embed=embed)
+
+        # Add each choice as a reaction to the message.
+        for emoji in reactions:
+            await options_msg.add_reaction(emoji)
 
         try:
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=10, check=check)
+            reaction, _ = await self.bot.wait_for(
+                "reaction_add",
+                timeout=10,
+                check=lambda reaction, user: (user == context.message.author
+                                              and str(reaction) in reactions)
+            )
 
             user_choice_emote = reaction.emoji
-            user_choice_index = reactions[user_choice_emote]
+            user_choice_id = reactions[user_choice_emote]
 
-            bot_choice_emote = random.choice(list(reactions.keys()))
-            bot_choice_index = reactions[bot_choice_emote]
+            bot_choice_emote = random.choice(tuple(reactions.keys()))
+            bot_choice_id = reactions[bot_choice_emote]
 
             result_embed = discord.Embed(color=colors["green"])
             result_embed.set_author(
-                name=context.author.display_name, icon_url=context.author.avatar_url)
-            await choose_message.clear_reactions()
+                name=context.author.display_name,
+                icon_url=context.author.avatar_url
+            )
 
-            choices_message = f"You've chosen {user_choice_emote} and I've chosen {bot_choice_emote}."
+            await options_msg.clear_reactions()
 
-            if user_choice_index == bot_choice_index:
-                result_embed.description = f"**That's a draw!**\n{choices_message}"
-                result_embed.colour = colors["orange"]
-            elif user_choice_index == 0 and bot_choice_index == 2:
-                result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = colors["green"]
-            elif user_choice_index == 1 and bot_choice_index == 0:
-                result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = colors["green"]
-            elif user_choice_index == 2 and bot_choice_index == 1:
-                result_embed.description = f"**You won!**\n{choices_message}"
-                result_embed.colour = colors["green"]
+            choices_msg = (f"You chose {user_choice_emote} and "
+                           + f"I chose {bot_choice_emote}.")
+
+            # Format embed based on result.
+            if user_choice_id == bot_choice_id:
+                result_embed.description = f"**It's a draw!**\n{choices_msg}"
+                result_embed.color = colors["yellow"]
+            elif ((user_choice_id == 0 and bot_choice_id == 2)
+                  or (user_choice_id == 1 and bot_choice_id == 0)
+                  or (user_choice_id == 2 and bot_choice_id == 1)):
+                result_embed.description = f"**You won!**\n{choices_msg}"
+                result_embed.color = colors["green"]
             else:
-                result_embed.description = f"**I won!**\n{choices_message}"
-                result_embed.colour = colors["red"]
-                await choose_message.add_reaction("🇱")
-            await choose_message.edit(embed=result_embed)
+                result_embed.description = f"**I won!**\n{choices_msg}"
+                result_embed.color = colors["red"]
+                await options_msg.add_reaction("🇱")
+
+            await options_msg.edit(embed=result_embed)
         except asyncio.exceptions.TimeoutError:
-            await choose_message.clear_reactions()
+            await options_msg.clear_reactions()
+
             timeout_embed = discord.Embed(
                 title="Too late slowpoke! I don't wanna play anymore!",
                 color=colors["red"]
@@ -183,7 +258,8 @@ class Fun(commands.Cog, name="fun"):
                 name=context.author.display_name,
                 icon_url=context.author.avatar_url
             )
-            await choose_message.edit(embed=timeout_embed)
+
+            await options_msg.edit(embed=timeout_embed)
 
     @commands.command(
         name="spam",
@@ -206,9 +282,10 @@ class Fun(commands.Cog, name="fun"):
             await context.send(embed=embed)
             return
 
+        emojis = (":monkey:", ":monkey_face:",
+                  ":hippopotamus:", ":lion:", ":pig:")
         for _ in range(amount):
-            message = " ".join([random.choice(
-                (":monkey:", ":monkey_face:", ":hippopotamus:", ":lion:", ":pig:")) for _ in range(10)])
+            message = " ".join([random.choice(emojis) for _ in range(10)])
             await member.send(message)
 
     @commands.command(
@@ -220,19 +297,18 @@ class Fun(commands.Cog, name="fun"):
         """
         Ask the Overseer anything. You may not like its answer.
         """
-        answers = ['It is certain.', 'It is decidedly so.', 'You may rely on it.', 'Without a doubt.',
-                   'Yes - definitely.', 'As I see, yes.', 'Most likely.', 'Outlook good.', 'Yes.',
-                   'Signs point to yes.', 'Reply hazy, try again.', 'Ask again later.', 'Better not tell you now.',
-                   'Cannot predict now.', 'Concentrate and ask again later.', 'Don\'t count on it.', 'My reply is no.',
-                   'My sources say no.', 'Outlook not so good.', 'Very doubtful.']
+        response = random.choice(random.choice(self.eight_ball_responses))
         embed = discord.Embed(
-            title="**My Answer:**",
-            description=f"{answers[random.randint(0, len(answers) - 1)]}",
-            color=colors["green"]
+            title="**Here's What I Think**",
+            description=response[0],
+            color=colors[response[1]]
         )
+
+        question = await self.parse_mentions(question, context.guild)
         embed.set_footer(
             text=f"{context.message.author.name} asked: {question}"
         )
+
         await context.send(embed=embed)
 
 

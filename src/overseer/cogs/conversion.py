@@ -295,7 +295,7 @@ class Conversion(commands.Cog, name="conversion"):
 
         if (from_type, to_type) in self.configs["valid_conversions"]:
             async with asynctempfile.TemporaryDirectory() as temp:
-                if to_type == 'gif':
+                if to_type == "gif":
                     output, result = await self.convert_to_gif(
                         temp,
                         from_type,
@@ -319,7 +319,7 @@ class Conversion(commands.Cog, name="conversion"):
                                 title="File Converted",
                                 description=(f"Here's your `{to_type}` file. "
                                              + "Tips are appreciated, but not "
-                                             + "required."),
+                                             + "required :moneybag:"),
                                 color=colors["green"]
                             ),
                             file=discord.File(
