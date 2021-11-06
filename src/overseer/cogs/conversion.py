@@ -53,7 +53,7 @@ class Conversion(commands.Cog, name="conversion"):
         await attachment.save(fp=input)
 
         """
-        Summary of common options passed into ffmpeg:
+        Common options passed into ffmpeg:
 
           -i <input_path>: Path to file being converted.
           -<codec:v>|<c:v> copy: Copy or add playback metadata to the file.
@@ -160,7 +160,7 @@ class Conversion(commands.Cog, name="conversion"):
             filetype = self.configs["aliases"].get(
                 filetype.lower(), filetype.lower())
 
-            if (filetype in self.configs["unsupported_embeds"]):
+            if filetype in self.configs["unsupported_embeds"]:
                 break
         else:
             # No point in converting files if they're all supported.
@@ -176,7 +176,7 @@ class Conversion(commands.Cog, name="conversion"):
                     filetype.lower(), filetype.lower())
 
                 # Convert all unsupported files.
-                if (filetype in self.configs["unsupported_embeds"]):
+                if filetype in self.configs["unsupported_embeds"]:
                     output, result = await self.convert_files(
                         temp,
                         filetype,
