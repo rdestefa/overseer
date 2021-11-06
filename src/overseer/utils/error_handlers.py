@@ -2,11 +2,11 @@
 
 import Levenshtein as lev
 
+from utils import custom_exceptions
+
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
-
-from utils import custom_exceptions
 
 
 def handle_command_not_found(

@@ -4,6 +4,7 @@ import logging
 import random
 
 from utils.configs import load_config
+from utils.parsers import parse_mentions
 
 import discord
 from discord.ext import commands
@@ -35,20 +36,27 @@ class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
 
     @commands.command(
         name="bify",
-        usage="bify <mode> <message>",
-        brief="B-ify each word in a message."
+        usage="bify <mode> <letter> <message>",
+        brief="B-ify a message."
     )
-    async def bify(self, context, mode: str, *, args):
+    async def bify(self, context, mode: str, letter: str, *, args):
         """
         The Overseer will b-ify each word in your message.
+        Choose a custom letter to `<letter>`-ify each word (defaults to :b:).
         """
-        message = ""
+        message, letter_emoji = "", ":b:"
 
-        for word in args.strip().split():
+        # Workaround for optional args since Discord.py doesn't support flags.
+        if len(letter) == 1 and letter.isalpha():
+            letter_emoji = f":regional_indicator_{letter}:"
+        else:
+            args = f"{letter} {args}"
+
+        for word in parse_mentions(args, self.bot, context.guild).split():
             if word[0] in self.vowels:
-                message += f":b:{word} "
+                message += f"{letter_emoji}{word} "
             else:
-                message += f":b:{word[1:]} "
+                message += f"{letter_emoji}{word[1:]} "
 
         await context.invoke(
             self.bot.get_command('say'), mode=mode, args=message)
