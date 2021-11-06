@@ -80,7 +80,7 @@ class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
         name="calc",
         aliases=["eval"],
         usage="calc <mode> <expression>",
-        brief="Do a simple calculation"
+        brief="Do a simple calculation."
     )
     async def calc(self, context, mode: str, *, expression):
         try:
@@ -96,7 +96,7 @@ class Formatting(commands.Cog, name="formatting (`text` or `embed` mode)"):
     @commands.command(
         name="cipher",
         usage="cipher <mode> <distance> <message>",
-        brief="Apply Caesar cipher to message."
+        brief="Caesar cipher."
     )
     async def cipher(self, context, mode: str, distance: int, *, message):
         # Initialize character mapping.
