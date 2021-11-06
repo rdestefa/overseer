@@ -59,8 +59,10 @@ class Info(commands.Cog, name="info"):
         Get the Overseer's invite link to share with other servers.
         """
         app_id = load_config_attr("overseer", "application_id")
+        invite_link = ("https://discordapp.com/oauth2/authorize?&"
+                       + f"client_id={app_id}&scope=bot&permissions=470150263")
         embed = discord.Embed(
-            description=f"Invite me by clicking [here](https://discordapp.com/oauth2/authorize?&client_id={app_id}&scope=bot&permissions=470150263).",
+            description=f"Invite me by clicking [here]({invite_link}).",
             color=colors["purple"]
         )
 
@@ -98,7 +100,14 @@ class Info(commands.Cog, name="info"):
         """
         Get some useful (or not) basic information about the server.
         """
-        server = context.message.guild
+        if not (server := context.message.guild):
+            await context.send(embed=discord.Embed(
+                title="Not in a Server!",
+                description="Your command didn't come from within a server.",
+                color=colors["red"]
+            ))
+            return
+
         roles = [x.name for x in server.roles]
         role_count = len(roles)
 
@@ -124,7 +133,7 @@ class Info(commands.Cog, name="info"):
         )
         embed.add_field(name="Member Count", value=server.member_count)
         embed.add_field(
-            name="Text/Voice Channels",
+            name="Text / Voice Channels",
             value=f"{len(server.channels)}"
         )
         embed.set_footer(text=f"Created on {time}")

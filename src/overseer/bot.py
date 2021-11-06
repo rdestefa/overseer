@@ -90,8 +90,8 @@ async def on_command_completion(context):
         context.message.author,
         context.message.author.id,
         context.command.qualified_name,
-        context.guild.name,
-        context.message.guild.id
+        glom.glom(context, "guild.name", default="no server"),
+        glom.glom(context, "message.guild.id", default="None")
     )
 
 
