@@ -120,5 +120,6 @@ async def on_command_error(context, error):
 
 
 if __name__ == "__main__":
+    # TODO: Add support for slash commands after official release.
     load_cogs(bot)
     bot.run(config["token"])
