@@ -30,7 +30,7 @@ class Conversion(commands.Cog, name="conversion"):
     these limitations, this Cog calls ffmpeg directly through `subprocess`.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.configs = load_config("conversion", safe=False)
 
@@ -263,7 +263,7 @@ class Conversion(commands.Cog, name="conversion"):
         usage="convert <to_type>",
         brief="Convert a file to a different type."
     )
-    async def convert(self, context, to_type: str):
+    async def convert(self, context: commands.Context, to_type: str) -> None:
         """
         The Overseer will convert a file you upload to a different type.
         """
@@ -376,5 +376,5 @@ class Conversion(commands.Cog, name="conversion"):
             ))
 
 
-def setup(bot):
-    bot.add_cog(Conversion(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Conversion(bot))

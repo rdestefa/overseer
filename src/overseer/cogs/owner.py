@@ -1,5 +1,6 @@
 # overseer.cogs.owner
 
+import glom
 import json
 import logging
 
@@ -16,19 +17,20 @@ logger = logging.getLogger()
 
 
 class Owner(commands.Cog, name="owner"):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.group(
+    @commands.hybrid_group(
         name="blacklist",
         usage="blacklist",
-        brief="Print the Overseer's blacklist."
+        brief="Print the Overseer's blacklist.",
+        fallback="get"
     )
-    async def blacklist(self, context):
+    async def blacklist(self, context: commands.Context) -> None:
         """
-        Add or remove users from the Overseer's blacklist.
-        Blacklisted users won't be able to issue commands to the Overseer.
-        Using this command without arguments will print the current blacklist.
+        Add or remove users from my blacklist.
+        Blacklisted users won't be able to issue commands to me.
+        Using this command without arguments will print my current blacklist.
         """
         if context.invoked_subcommand is None:
             with open("lists/blacklist.json") as file:
@@ -49,9 +51,18 @@ class Owner(commands.Cog, name="owner"):
         brief="Add a user to the blacklist."
     )
     @commands.is_owner()
-    async def blacklist_add(self, context, member: discord.Member = None):
+    async def blacklist_add(
+        self,
+        context: commands.Context,
+        member: discord.Member = None
+    ) -> None:
         """
-        Add a user to the Overseer's blacklist.
+        Add a user to my blacklist.
+
+        Parameters
+        -----------
+        member: discord.Member
+            The user to add to the blacklist.
         """
         try:
             with open("lists/blacklist.json") as file:
@@ -105,9 +116,18 @@ class Owner(commands.Cog, name="owner"):
         brief="Remove a user from the blacklist."
     )
     @commands.is_owner()
-    async def blacklist_remove(self, context, member: discord.Member = None):
+    async def blacklist_remove(
+        self,
+        context: commands.Context,
+        member: discord.Member = None
+    ) -> None:
         """
-        Remove a user from the Overseer's blacklist.
+        Remove a user from my blacklist.
+
+        Parameters
+        -----------
+        member: discord.Member
+            The user to remove from the blacklist.
         """
         try:
             moderation.blacklist_remove(member.id)
@@ -155,12 +175,58 @@ class Owner(commands.Cog, name="owner"):
             await context.send(embed=embed)
 
     @commands.command(
-        name="shutdown",
-        usage="shutdown",
-        brief="Shut down the Overseer...for now."
+        name="sync",
+        usage="sync <global_sync>",
+        brief="Sync bot commands to Discord."
     )
     @commands.is_owner()
-    async def shutdown(self, context):
+    async def sync(
+        self,
+        context: commands.Context,
+        global_sync: bool = False
+    ) -> None:
+        """
+        Sync bot commands to Discord.
+        """
+        guild_id = glom.glom(context, "guild.id", default=None)
+        if global_sync or guild_id is None:
+            await self.bot.tree.sync(guild=None)
+        else:
+            guild = discord.Object(id=guild_id)
+            self.bot.tree.copy_global_to(guild=guild)
+            await self.bot.tree.sync(guild=guild)
+
+        await context.send("Done")
+
+    @commands.command(
+        name="clear",
+        usage="clear <do_global>",
+        brief="Clear bot commands from Discord."
+    )
+    @commands.is_owner()
+    async def clear(
+        self,
+        context: commands.Context,
+        global_clear: bool = False
+    ) -> None:
+        """
+        Clear bot commands from Discord.
+        """
+        guild_id = glom.glom(context, "guild.id", default=None)
+        guild = discord.Object(
+            id=guild_id) if guild_id and not global_clear else None
+
+        self.bot.tree.clear_commands(guild=guild)
+        await self.bot.tree.sync(guild=guild)
+        await context.send("Done")
+
+    @commands.hybrid_command(
+        name="shutdown",
+        usage="shutdown",
+        brief="Shut down the Overseer... for now."
+    )
+    @commands.is_owner()
+    async def shutdown(self, context: commands.Context) -> None:
         """
         Shut down the Overseer bot. Only the Overseer's owner can do this.
         """
@@ -173,5 +239,5 @@ class Owner(commands.Cog, name="owner"):
         await self.bot.close()
 
 
-def setup(bot):
-    bot.add_cog(Owner(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Owner(bot))

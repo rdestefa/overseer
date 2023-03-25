@@ -2,6 +2,7 @@
 
 # This is the main execution file for the Overseer Discord bot.
 
+import asyncio
 import glom
 import json
 import os
@@ -60,6 +61,8 @@ async def not_blacklisted(context):
 # Executes on initial load of the Overseer.
 @bot.event
 async def on_ready():
+    await bot.wait_until_ready()
+
     logger.info("Logged in as %s", bot.user.name)
     logger.info("Discord.py API version: %s", discord.__version__)
     logger.info("Python version: %s", platform.python_version())
@@ -118,8 +121,12 @@ async def on_command_error(context, error):
 
 # ---------------------------- STARTUP EXECUTION ---------------------------- #
 
+async def main():
+    await load_cogs(bot)
+    async with bot:
+        await bot.start(config["token"])
+
 
 if __name__ == "__main__":
     # TODO: Add support for slash commands after official release.
-    load_cogs(bot)
-    bot.run(config["token"])
+    asyncio.run(main())

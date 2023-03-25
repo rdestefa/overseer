@@ -142,5 +142,5 @@ class Calendar(commands.Cog, name="calendar"):
         pass
 
 
-def setup(bot):
-    bot.add_cog(Calendar(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Calendar(bot))

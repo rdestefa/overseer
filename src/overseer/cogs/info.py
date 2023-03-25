@@ -18,16 +18,16 @@ class Info(commands.Cog, name="info"):
     Cog for displaying basic info about the Overseer and its servers.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
+    @commands.hybrid_command(
         name="info",
         aliases=["botinfo"],
         usage="info",
         brief="Get basic information about the Overseer."
     )
-    async def info(self, context):
+    async def info(self, context: commands.Context) -> None:
         """
         Get some useful (or not) basic information about the Overseer.
         """
@@ -49,12 +49,12 @@ class Info(commands.Cog, name="info"):
 
         await context.send(embed=embed)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="invite",
         usage="invite",
         brief="Get the Overseer's invite link."
     )
-    async def invite(self, context):
+    async def invite(self, context: commands.Context) -> None:
         """
         Get the Overseer's invite link to share with other servers.
         """
@@ -75,12 +75,12 @@ class Info(commands.Cog, name="info"):
                 "Overseer doesn't have permission to DM %s", context.author)
             await context.send(embed=embed)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="ping",
         usage="ping",
         brief="Check if the Overseer is alive."
     )
-    async def ping(self, context):
+    async def ping(self, context: commands.Context) -> None:
         """
         Check if the Overseer is alive.
         """
@@ -91,12 +91,12 @@ class Info(commands.Cog, name="info"):
         )
         await context.send(embed=embed)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="serverinfo",
         usage="serverinfo",
         brief="Get basic information about the server."
     )
-    async def serverinfo(self, context):
+    async def serverinfo(self, context: commands.Context) -> None:
         """
         Get some useful (or not) basic information about the server.
         """
@@ -123,7 +123,7 @@ class Info(commands.Cog, name="info"):
             description=f"{server}",
             color=colors["green"]
         )
-        embed.set_thumbnail(url=server.icon_url)
+        embed.set_thumbnail(url=server.icon)
         embed.add_field(name="Owner", value=f"{server.owner}")
         embed.add_field(name="Server ID", value=server.id)
         embed.add_field(
@@ -141,5 +141,5 @@ class Info(commands.Cog, name="info"):
         await context.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(Info(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Info(bot))

@@ -20,7 +20,7 @@ logger = logging.getLogger()
 
 
 class Fun(commands.Cog, name="fun"):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.eight_ball_responses = (
             (
@@ -51,14 +51,14 @@ class Fun(commands.Cog, name="fun"):
             )
         )
 
-    @commands.command(
+    @commands.hybrid_command(
         name="bitcoin",
         usage="bitcoin",
         brief="Get the current price of Bitcoin."
     )
-    async def bitcoin(self, context):
+    async def bitcoin(self, context: commands.Context) -> None:
         """
-        Get the current price of Bitcoin from coindesk.com.
+        Get the current price of Bitcoin from `coindesk.com`.
         """
         url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
         # Asynchronously fetch data from the coindesk API.
@@ -84,13 +84,13 @@ class Fun(commands.Cog, name="fun"):
         - BucketType.server for a per-server cooldown.
         - BucketType.channel for a per-channel cooldown.
     """
-    @commands.command(
+    @commands.hybrid_command(
         name="dailyfact",
         usage="dailyfact",
         brief="Get your daily dose of knowledge."
     )
     @commands.cooldown(1, 86400, BucketType.user)
-    async def dailyfact(self, context):
+    async def dailyfact(self, context: commands.Context) -> None:
         """
         Get a random fact from the Internet once per day per user.
         """
@@ -119,15 +119,20 @@ class Fun(commands.Cog, name="fun"):
                     # Reset user's cooldown since they missed their daily fact.
                     self.dailyfact.reset_cooldown(context)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="poll",
         usage="poll <title>",
         brief="Create a poll that members can vote on."
     )
-    async def poll(self, context, *, title):
+    async def poll(self, context: commands.Context, *, title) -> None:
         """
         Create a poll that members can vote on.
         The three default reactions are yes, no, and maybe.
+
+        Parameters
+        -----------
+        title: str
+            What people are going to vote on.
         """
         embed = discord.Embed(
             title="A new poll has been created!",
@@ -142,12 +147,12 @@ class Fun(commands.Cog, name="fun"):
         await embed_message.add_reaction("👎")
         await embed_message.add_reaction("🤷")
 
-    @commands.command(
+    @commands.hybrid_command(
         name="rps",
         usage="rps",
         brief="Play rock, paper, scissors with the Overseer."
     )
-    async def rock_paper_scissors(self, context):
+    async def rock_paper_scissors(self, context: commands.Context) -> None:
         """
         Play rock, paper, scissors with the me. It's a fight to the death!
         I don't like time-wasters, so you'll have 10 seconds to respond.
@@ -165,7 +170,7 @@ class Fun(commands.Cog, name="fun"):
         )
         embed.set_author(
             name=context.author.display_name,
-            icon_url=context.author.avatar_url
+            icon_url=context.author.avatar
         )
         options_msg = await context.send(embed=embed)
 
@@ -190,7 +195,7 @@ class Fun(commands.Cog, name="fun"):
             result_embed = discord.Embed(color=colors["green"])
             result_embed.set_author(
                 name=context.author.display_name,
-                icon_url=context.author.avatar_url
+                icon_url=context.author.avatar
             )
 
             await options_msg.clear_reactions()
@@ -222,20 +227,33 @@ class Fun(commands.Cog, name="fun"):
             )
             timeout_embed.set_author(
                 name=context.author.display_name,
-                icon_url=context.author.avatar_url
+                icon_url=context.author.avatar
             )
 
             await options_msg.edit(embed=timeout_embed)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="spam",
         usage="spam <@user> <number>",
         brief="Spam a user with DMs."
     )
     @commands.is_owner()
-    async def spam(self, context, member: discord.Member, amount: int):
+    async def spam(
+        self,
+        context: commands.Context,
+        member: discord.Member,
+        amount: int
+    ) -> None:
         """
-        The Overseer will spam a specified user's DMs `<number>` times.
+        I will spam a specified user's DMs `<number>` times. They will never
+        recover.
+
+        Parameters
+        -----------
+        member: discord.Member
+            The person you want to spam.
+        amount: int
+            The number of messages to send. Must be a positive integer.
         """
         if amount < 1:
             logger.error(
@@ -254,14 +272,19 @@ class Fun(commands.Cog, name="fun"):
             message = " ".join([random.choice(emojis) for _ in range(10)])
             await member.send(message)
 
-    @commands.command(
+    @commands.hybrid_command(
         name="8ball",
         usage="8ball <question>",
         brief="Ask the Overseer anything."
     )
-    async def eight_ball(self, context, *, question):
+    async def eight_ball(self, context: commands.Context, *, question) -> None:
         """
-        Ask the Overseer anything. You may not like its answer.
+        Ask me anything. You may not like what I have to say.
+
+        Parameters
+        -----------
+        question: str
+            The question you want to ask.
         """
         response = random.choice(random.choice(self.eight_ball_responses))
         embed = discord.Embed(
@@ -278,5 +301,5 @@ class Fun(commands.Cog, name="fun"):
         await context.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(Fun(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Fun(bot))

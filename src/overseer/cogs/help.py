@@ -13,18 +13,23 @@ logger = logging.getLogger()
 
 
 class Help(commands.Cog, name="help"):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command(
+    @commands.hybrid_command(
         name="help",
         usage="help <command>",
         brief="List one or all of the Overseer's commands."
     )
-    async def help(self, context, *, command=None):
+    async def help(self, context: commands.Context, *, command=None) -> None:
         """
         Display help text for a specific command.
-        If no command is specified, the Overseer will list all its commands.
+        If no command is specified, I will list all my commands.
+
+        Parameters
+        -----------
+        command: str
+            The command you need help with. If empty, all commands are shown.
         """
         if command is not None:
             # Trim prefix from command.
@@ -75,5 +80,5 @@ class Help(commands.Cog, name="help"):
         await context.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(Help(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Help(bot))

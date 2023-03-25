@@ -193,5 +193,5 @@ class Moderation(commands.Cog, name="moderation"):
                 "Failed to warn %s (%s): %s", member, type(e).__name__, str(e))
 
 
-def setup(bot):
-    bot.add_cog(Moderation(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Moderation(bot))

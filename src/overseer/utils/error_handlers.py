@@ -125,6 +125,17 @@ def handle_bad_argument(error: commands.BadArgument, prefix: str) -> discord.Emb
     return embed
 
 
+def handle_bad_literal_argument(error: commands.BadLiteralArgument) -> discord.Embed:
+    message = (f"`{error.param.name}` must be one of the following: " +
+               f"{', '.join(map(lambda x: f'`{x}`', error.literals))}.")
+    embed = discord.Embed(
+        title="Bad Argument!",
+        description=message
+    )
+
+    return embed
+
+
 def handle_generic_error() -> discord.Embed:
     embed = discord.Embed(
         title="Error!",
@@ -160,6 +171,8 @@ def handle_error(
             embed = handle_too_many_arguments(failed_command, prefix)
         case commands.BadArgument:
             embed = handle_bad_argument(error, prefix)
+        case commands.BadLiteralArgument:
+            embed = handle_bad_literal_argument(error)
         case _:
             embed = handle_generic_error()
 

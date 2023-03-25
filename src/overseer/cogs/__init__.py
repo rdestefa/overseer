@@ -12,7 +12,7 @@ from discord.ext.commands import Bot
 logger = logging.getLogger()
 
 
-def load_cogs(bot: Bot, cogs_dir: str = None) -> None:
+async def load_cogs(bot: Bot, cogs_dir: str = None) -> None:
     cogs_dir = cogs_dir or os.path.dirname(__file__)
     cogs_root = os.path.dirname(cogs_dir)
 
@@ -35,12 +35,12 @@ def load_cogs(bot: Bot, cogs_dir: str = None) -> None:
             continue
 
         # Load the cog into the Overseer.
-        load_cog(bot, extension, cog_name)
+        await load_cog(bot, extension, cog_name)
 
 
-def load_cog(bot: Bot, extension: str, cog_name: str) -> None:
+async def load_cog(bot: Bot, extension: str, cog_name: str) -> None:
     try:
-        bot.load_extension(extension)
+        await bot.load_extension(extension)
     except Exception as e:
         exception = f"{type(e).__name__}: {e}"
         logger.error(
